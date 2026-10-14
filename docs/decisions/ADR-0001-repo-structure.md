@@ -4,9 +4,6 @@ date: 2026-10-14
 ---
 # ADR-0001: Cấu trúc repo cho Giai đoạn 0
 
-- Trạng thái: **accepted** 
-  (Dùng từ vựng ADR `proposed → accepted/superseded`, khớp `docs/templates/adr.md`.)
-
 ## Bối cảnh
 Repo ở Stage 0: chưa có code, bước kế tiếp là Stage 1 (Plan). Bản draft cấu trúc
 (`docs/ideas/01-repo-structure-draft.md`) đưa ra cấu trúc đầy đủ gồm cả `harness/`,
