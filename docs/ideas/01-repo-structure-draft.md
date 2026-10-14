@@ -1,4 +1,3 @@
-+++++ product/giai-doan-0.md
 # Giai đoạn 0: dựng style anchor
 # Ý tưởng cấu trúc draft repo, vẫn cần architect-agent phản biện đưa ra kết quả cuối 
 
