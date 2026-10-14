@@ -55,7 +55,7 @@ rỗng mà Stage 1 không dùng tới, và khóa sớm những lựa chọn chư
 | C20 | *(U5)* **Không bịa thông tin người dùng chưa nói; thiếu thì ghi vào "Câu hỏi mở"** | Một giả định bịa trông y hệt một sự thật khi đọc lại sau ba tuần. Bắt nó hiện ra thành câu hỏi là cách duy nhất giữ được phân biệt đó |
 | C21 | *(U6)* **Tài liệu tiếng Việt; tên file, ID, frontmatter, tên test, code tiếng Anh.** Nguồn hai lớp: (1) **chỉ thị ban đầu của người dùng 2026-10-14** gồm tên file, ID, frontmatter; (2) **phần mở rộng "tên test, code" do agent đề xuất**, người dùng duyệt ở vòng này (2026-10-14) | Tách hai lớp vì chúng có độ tin cậy khác nhau: lớp 1 là người dùng nói, lớp 2 là agent suy rộng ra rồi mới được duyệt. Chính §C13 bắt được chỗ mở rộng này — xem `docs/learning-log.md` |
 | C22 | *(U7)* **8 dòng điều kiện trong "Sẽ thêm khi cần" là điều kiện DỰ KIẾN, xem lại đầu mỗi stage**, không phải luật cứng. Gồm dòng: *bắt đầu stage Dev → agent chạy trong container không có push token* | Điều kiện viết ở Stage 0 là dự đoán về tương lai chưa xảy ra; duyệt chúng thành luật cứng sẽ ràng buộc mình bằng thông tin cũ nhất mình từng có. Dòng container đến từ § "Mô hình mối đe dọa" — biện pháp đã nêu phải có chỗ bám, nếu không tới lúc đó sẽ quên |
-| C23 | **Lằn ranh xếp mức cho finding về hook**: lọt bằng cách viết thông thường / fail open / chặn nhầm → **blocking**; chỉ obfuscation có chủ đích → **major** | Người dùng duyệt ở vòng này (2026-10-14) khi chốt kết luận round 2 là "5 blocking". Luật cũ ("vượt được hook → major") mâu thuẫn với chính bản ghi ngay dưới nó. Ranh giới thật nằm ở **phải cố ý tới mức nào mới lọt**, không ở "có lọt hay không" |
+| C23 | **Lằn ranh xếp mức cho finding về hook** — luật viết ở `.agents/skills/qa-review/SKILL.md` § "Ngoại lệ: finding về hook bảo vệ status", không chép lại ở đây | Người dùng duyệt ở vòng này (2026-10-14) khi chốt kết luận round 2 là "5 blocking". Luật cũ ("vượt được hook → major") mâu thuẫn với chính bản ghi ngay dưới nó. Ranh giới thật nằm ở **phải cố ý tới mức nào mới lọt**, không ở "có lọt hay không" |
 
 ## Quyết định — quy trình (§P) — người dùng chốt 2026-10-14
 Các điểm README nói nước đôi, nay đã chốt và đưa vào bảng 6 stage trong `AGENTS.md`:
@@ -83,7 +83,7 @@ Các điểm README nói nước đôi, nay đã chốt và đưa vào bảng 6 
 | O8 | Ngưỡng dừng vòng review cho các stage sau | Mặc định 0 blocking, ≤2 major, tối đa 3 vòng. Gate riêng: `requirements` = QA đặt được tên test cho 100% AC; `design` = mọi AC có tầng test + mọi lựa chọn stack có ADR; `dev` = test/lint/SAST pass. Ghi rõ **"giá trị ban đầu, chỉnh theo learning-log"** | Cần một con số để bắt đầu đo, nhưng chưa có dữ liệu để biết nó đúng. Đánh dấu là tạm thời để sau này chỉnh mà không phải tranh luận lại |
 | O9 | `reference/asdlc-starter/` có commit không? | Không commit, thêm `reference/` vào `.gitignore`, **xóa sau khi ADR-0001 được accept** | Chỉ là giàn giáo: đã rút xong template và hook. Giữ lại sẽ có người sửa nhầm bản copy |
 | O10 | `requirements.md` có hai chủ: bảng 6 stage giao vai Architecture, skill PO lại ghi trong phạm vi của mình — mà quy trình trong skill chỉ tạo `intent.md` (review vòng 1 #3) | `requirements.md` thuộc **vai Product Owner**, tạo ở **đầu Stage 2**. `design.md` + ADR thuộc **vai Architecture**. Quy trình requirements trong skill `product-owner` sẽ thêm khi bắt đầu Stage 2 | Biến `intent.md` thành US/AC là việc sản phẩm — ai viết intent thì hiểu rõ nhất ý định đằng sau. Kiến trúc đọc requirements như đầu vào, không tự đặt ra yêu cầu cho mình rồi tự thỏa mãn |
-| O11 | Mỗi reviewer dùng thang mức độ riêng (Codex trả `P0`–`P3`, `high`/`medium`/`low`), không gộp lại được để tính ngưỡng dừng | Bảng quy đổi trong AGENTS.md: `critical`/`high`/`P0`/`P1` → blocking; `medium`/`P2` → major; `low`/`P3` → minor. Giữ nhãn gốc trong ngoặc. **Giá trị ban đầu, chỉnh theo learning-log** | Ngưỡng dừng ("0 blocking, ≤2 major") chỉ có nghĩa khi mọi reviewer nói cùng một thang. Giữ nhãn gốc để sau này kiểm lại xem quy đổi có quá nặng tay hay không |
+| O11 | Mỗi reviewer dùng thang mức độ riêng (Codex trả `P0`–`P3`, `high`/`medium`/`low`), không gộp lại được để tính ngưỡng dừng | Bảng quy đổi đặt ở `.agents/skills/qa-review/SKILL.md` — **nguồn duy nhất**, không chép lại vào ADR hay AGENTS.md. Giữ nhãn gốc trong ngoặc. **Giá trị ban đầu, chỉnh theo learning-log** | Ngưỡng dừng ("0 blocking, ≤2 major") chỉ có nghĩa khi mọi reviewer nói cùng một thang. Giữ nhãn gốc để sau này kiểm lại xem quy đổi có quá nặng tay hay không |
 
 ## Mục chưa có nguồn — đã giải quyết hết (2026-10-14)
 Rà soát theo §C13 tìm ra 7 luật trong `AGENTS.md` không có nguồn. Người dùng đã chọn
@@ -114,11 +114,24 @@ thì mọi lỗ hổng đều trông như blocking, và cuộc tranh luận khô
 | **Rủi ro còn lại — chấp nhận ở Stage 0–1** | Agent dùng **chung git credentials** với người dùng, nên về nguyên tắc có thể vượt hook qua Bash và push thẳng. Chấp nhận vì ở Stage 0–1 chưa có code, thiệt hại tối đa là vài file tài liệu — khôi phục được từ git |
 | **Biện pháp dự kiến** | Khi bắt đầu **stage Dev**: chạy agent trong container **không có push token**. Lúc đó ranh giới tin cậy nằm ở credentials, đúng chỗ của nó, chứ không nằm ở hook |
 
-**Hệ quả cho việc xếp mức độ:** finding dạng **"vượt được hook"** xếp **major**, không
-phải blocking — vì hook vốn không nhận nhiệm vụ chống kẻ cố ý. Finding dạng **"hook
-không chạy đúng trong điều kiện bình thường"** (fail open, bắt nhầm việc vô hại) vẫn là
-blocking, vì đó là hỏng đúng việc nó nhận làm. Ghi trùng vào
-`.agents/skills/qa-review/SKILL.md`.
+### Phạm vi từng lớp — quyết định của người ở round 3 (2026-10-14)
+Ba vòng review đều quay lại cùng một chỗ: hook Bash chặn hụt, vá xong lại hở chỗ khác.
+Nguyên nhân là **đặt sai việc cho sai lớp** — một hook chạy trong session không thể
+canh được mọi cách ghi file. Phân lại:
+
+| Lớp | Canh gì | Không canh gì |
+|---|---|---|
+| `protect_approved.py` (hook) | Đường **Edit/Write/MultiEdit** trong một session. Đây là phạm vi chính thức của hook | Mọi thứ khác |
+| `protect_approved_bash.py` (hook) | **Chỉ là nhắc nhở best-effort.** Bắt các lệnh shell thẳng thừng, không hứa hẹn gì hơn — ghi rõ trong comment đầu file | Không được tính là lớp bảo vệ khi xếp mức finding |
+| `harness/gates/check_status.py` (gate) | **Ghi qua Bash, và mọi đường khác.** Chạy trên git, ngoài session, nên không quan tâm thay đổi đến từ công cụ nào | Không phân biệt được người duyệt với agent (known-gap, xem docstring) |
+
+Vì vậy finding dạng "có cách ghi qua Bash mà `protect_approved_bash.py` không bắt" là
+**ngoài phạm vi hook** — thuộc về gate. Vòng đuổi theo từng lệnh shell dừng ở đây.
+
+**Hệ quả cho việc xếp mức độ:** luật quy đổi nằm ở `.agents/skills/qa-review/SKILL.md`
+§ "Ngoại lệ: finding về hook bảo vệ status" — **nguồn duy nhất**, không chép lại ở đây
+cũng không ở `AGENTS.md`. Review vòng 3 bắt được đúng lỗi đó: bản chép trong AGENTS.md
+đã lệch khỏi §C23 và có thể cho gate đạt sai.
 
 ## Cổng duyệt thật — quyết định cần người
 Hook chặn được *tai nạn* và *đường tắt tiện tay*, không chặn được ý định. Những việc

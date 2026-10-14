@@ -4,8 +4,18 @@
 
 Giữ đuôi .sh để không phải đổi đường dẫn trong settings.json; nội dung là Python.
 
-GUARDRAIL CHỐNG NHẦM LẪN, KHÔNG PHẢI RANH GIỚI BẢO MẬT — xem ADR-0001
-§ "Mô hình mối đe dọa". Một lệnh cố tình né vẫn lọt (xem KNOWN GAP bên dưới).
+MỨC ĐỘ CAM KẾT: **nhắc nhở best-effort, không phải một lớp bảo vệ.**
+Quyết định của người ở round 3 (ADR-0001 § "Phạm vi từng lớp"): file này chỉ bắt các
+lệnh shell thẳng thừng và KHÔNG hứa hẹn gì hơn. Việc canh "ghi qua Bash" thuộc về
+`harness/gates/check_status.py` — gate chạy trên git, ngoài session, nên không quan
+tâm thay đổi đến từ công cụ nào.
+
+Hệ quả: finding dạng "có cách ghi qua Bash mà file này không bắt" là **ngoài phạm vi**,
+không tính là lỗi của hook. Ba vòng review đã đuổi theo từng lệnh shell và không hội tụ
+— vòng đuổi dừng ở đây bằng cách chuyển việc sang đúng lớp.
+
+Ví dụ nằm ngoài phạm vi (gate bắt, hook này không): `sed -i 's/old/new/' intent.md`
+sửa nội dung một file đã approved — lệnh không nhắc gì tới status nên hook không thấy.
 
 Chặn khi lệnh vừa nhắc tới một trạng thái kết thúc, vừa có dấu hiệu GHI:
   - `sed -i 's/status: draft/status: approved/' f`   (có cả hai)

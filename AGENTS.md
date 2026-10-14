@@ -75,8 +75,9 @@ dung bảng (ADR-0001 § "Mục chưa có nguồn" U2).
 - **Không bao giờ tự đổi `status` sang `approved`.** Chỉ người dùng làm. Hai hook chặn:
   `protect-approved.sh` (Edit/Write/MultiEdit — soi cả nội dung sắp ghi) và
   `protect-approved-bash.sh` (lệnh shell). Cả hai **fail closed**. Chúng là lớp
-  guardrail **chống nhầm lẫn**, không chống agent cố ý: cổng duyệt thật là **merge PR
-  vào `master` do người làm**. Vì vậy finding "vượt được hook" xếp major, không blocking.
+  guardrail **chống nhầm lẫn** trên đường Edit/Write/MultiEdit, không chống agent cố ý.
+  Ghi qua Bash nằm **ngoài phạm vi hook** — do `harness/gates/check_status.py` canh.
+  Cổng duyệt thật là **merge PR vào `master` do người làm**.
   Test: `tests/hooks/test_protect_approved.sh`.
   → ADR-0001 §C9, §C14, § "Mô hình mối đe dọa"
 - **Model nào viết thì model kia review.** Agent không tự review sản phẩm của chính nó.
@@ -88,6 +89,8 @@ dung bảng (ADR-0001 § "Mục chưa có nguồn" U2).
   `NFR-xx`) khi sửa — ID là thứ review và test trỏ tới. → ADR-0001 §C19
 - Không bịa thông tin người dùng chưa nói. Thiếu → ghi vào "Câu hỏi mở".
   → ADR-0001 §C20
+- **Chạy `python3 harness/gates/check_status.py` trước khi mở PR.** Gate báo FAIL nếu
+  nhánh sửa file đã duyệt trên `master`. → ADR-0001 § "Mô hình mối đe dọa"
 - **Bên sửa không được kết luận gate đạt.** Sửa xong thì ghi "đã xử lý n/n" và
   "Gate: chờ round <n+1>" — **vòng review kế tiếp** mới quyết định gate có đạt hay
   không. Lý do: bên vừa sửa là bên ít có khả năng thấy chỗ mình sửa hụt nhất.
@@ -121,9 +124,8 @@ Mặc định mọi vòng: **0 blocking, ≤2 major, tối đa 3 vòng**. Gate r
 | `design.md` | Mọi AC có tầng test tương ứng; mọi lựa chọn stack có ADR |
 | code (Stage 3) | test / lint / SAST đều pass |
 
-Mỗi reviewer dùng thang mức độ riêng (`P0`–`P3`, `high`/`medium`/`low`). Quy về thang
-chung của repo trước khi đếm — bảng quy đổi ở `.agents/skills/qa-review/SKILL.md`
-§ "Quy đổi mức độ giữa các reviewer". → ADR-0001 §O11
+Quy đổi mức độ: xem `.agents/skills/qa-review/SKILL.md`. Đó là **nguồn duy nhất** —
+đừng chép lại luật quy đổi vào đây hay vào ADR. → ADR-0001 §O11, §C23
 
 ## Bản đồ thư mục → ADR-0001 §C1, §C2, §C4, §C7
 - `AGENTS.md` — file này, nguồn chung cho cả Claude và Codex.
@@ -134,8 +136,10 @@ chung của repo trước khi đếm — bảng quy đổi ở `.agents/skills/q
   `agents/qa-analyst.md`, `hooks/`, `settings.json`.
 - `docs/` — bộ nhớ dự án: `ideas/` (chỉ đọc), `templates/`, `decisions/`, `reviews/`,
   `logs/` (transcript lần chạy lỗi), `learning-log.md`.
-- `tests/hooks/` — test cho hook. Sửa hook thì chạy lại
-  `bash tests/hooks/test_protect_approved.sh` trước khi commit.
+- `harness/gates/` — gate chạy ngoài session, trả exit code.
+  `check_status.py`: nhánh có sửa file đã duyệt trên `master` không.
+- `tests/` — `hooks/` và `gates/`. Sửa hook hay gate thì chạy lại test tương ứng
+  trước khi commit.
 
 ## Sẽ thêm khi cần → ADR-0001 §C8, §C22
 Điều kiện dưới đây là **dự kiến, xem lại đầu mỗi stage** — không phải luật cứng. Chúng
@@ -149,7 +153,7 @@ viết ở Stage 0, tức bằng thông tin cũ nhất mình từng có.
 | Vai DevOps (Stage 5) | Khi có code chạy được và cần PR/CI thật. |
 | Metric Maintain + ngưỡng mở `intent.md` mới | Khi Stage 5 deploy xong lần đầu. |
 | `src/` | Khi `requirements.md` **và** `design.md` cùng approved, và test của task đó đã viết xong. |
-| `harness/` (`pipeline.yaml`, `run.py`, `gates/`) | Khi đã chạy tay trọn ≥1 vòng stage và các bước lặp đủ ổn định để script hóa. |
+| `harness/pipeline.yaml`, `harness/run.py` | Khi đã chạy tay trọn ≥1 vòng stage và các bước lặp đủ ổn định để script hóa. (`harness/gates/check_status.py` đã có từ round 3.) |
 | `.github/workflows/gates.yml` | Khi `harness/gates/` đã có ít nhất một script chạy được ở local. |
 | **Agent chạy trong container không có push token** | **Khi bắt đầu stage Dev.** Từ § "Mô hình mối đe dọa" (ADR-0001): ranh giới tin cậy thật là credentials, không phải hook. |
 

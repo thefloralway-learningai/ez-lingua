@@ -6,9 +6,17 @@ Giữ đuôi .sh để không phải đổi đường dẫn trong settings.json;
 Trước đây viết bằng bash, nhưng here-string cần file tạm — TMPDIR hỏng là hook
 fail open đúng lúc nó tuyên bố fail closed (review vòng 2, finding A1).
 
+PHẠM VI: chỉ đường Edit/Write/MultiEdit. Ghi qua Bash nằm NGOÀI phạm vi hook —
+cái đó do harness/gates/check_status.py canh (ADR-0001 § "Mô hình mối đe dọa",
+quyết định của người ở round 3).
+
 ĐÂY LÀ GUARDRAIL CHỐNG NHẦM LẪN, KHÔNG PHẢI RANH GIỚI BẢO MẬT.
 Cổng duyệt thật là merge PR vào master do người làm.
-Xem ADR-0001 § "Mô hình mối đe dọa" và §C14.
+
+Chỉ đọc `status` trong YAML FRONTMATTER (khối giữa hai dòng `---` ở ĐẦU file).
+Nội dung ngoài frontmatter bỏ qua hoàn toàn: một tài liệu nói *về* quy trình duyệt
+hay có code fence minh họa `status: approved` không phải là tài liệu đã duyệt
+(review vòng 3, finding #3 — false positive khiến người ta tắt guardrail).
 
 Chặn (exit 2) khi:
   1. File hiện tại đã ở trạng thái kết thúc.
@@ -25,7 +33,8 @@ import re
 import sys
 
 FINAL_STATES = {"approved", "accepted", "superseded"}
-STATUS_LINE = re.compile(r"^[ \t]*status[ \t]*:[ \t]*(.*)$", re.IGNORECASE | re.MULTILINE)
+STATUS_LINE = re.compile(r"^[ \t]*status[ \t]*:[ \t]*(.*)$", re.IGNORECASE)
+FENCE = "---"
 
 STOP = "Hãy DỪNG và báo người dùng."
 
@@ -64,11 +73,35 @@ def normalize(raw):
     return value.lower()
 
 
-def is_final(text):
+class BadFrontmatter(Exception):
+    """Frontmatter mở bằng `---` nhưng không đóng — không kết luận được."""
+
+
+def frontmatter(text):
+    """Trả về các dòng trong YAML frontmatter, hoặc None nếu file không có.
+
+    Frontmatter phải mở bằng `---` ở DÒNG ĐẦU và đóng bằng `---` hoặc `...`.
+    Mở mà không đóng → BadFrontmatter (fail closed).
+    """
     if not text:
-        return False
-    for m in STATUS_LINE.finditer(text):
-        if normalize(m.group(1)) in FINAL_STATES:
+        return None
+    lines = text.split("\n")
+    if not lines or lines[0].strip() != FENCE:
+        return None
+    for i in range(1, len(lines)):
+        if lines[i].strip() in (FENCE, "..."):
+            return lines[1:i]
+    raise BadFrontmatter("mở bằng `---` ở dòng đầu nhưng không có dòng `---` đóng lại")
+
+
+def is_final(text):
+    """File có đang ở trạng thái kết thúc không? Chỉ xét frontmatter."""
+    block = frontmatter(text)
+    if block is None:
+        return False  # không có frontmatter → không phải artifact được quản lý
+    for line in block:
+        m = STATUS_LINE.match(line)
+        if m and normalize(m.group(1)) in FINAL_STATES:
             return True
     return False
 
@@ -106,7 +139,13 @@ def main():
                   % (path, exc, STOP))
 
     # 1. File hiện tại đã chốt.
-    if is_final(current):
+    try:
+        current_final = is_final(current)
+    except BadFrontmatter as exc:
+        block("frontmatter của %s hỏng: %s.\n"
+              "Không xác minh được trạng thái hiện tại — fail closed.\n%s"
+              % (path, exc, STOP))
+    if current_final:
         block("%s đã ở trạng thái kết thúc.\n"
               "Muốn sửa, người dùng phải đổi status về draft/proposed." % path)
 
@@ -127,7 +166,13 @@ def main():
         post = apply_edit(post, ti.get("old_string") or "",
                           ti.get("new_string") or "", bool(ti.get("replace_all")))
 
-    if is_final(post):
+    try:
+        post_final = is_final(post)
+    except BadFrontmatter as exc:
+        block("frontmatter của nội dung sắp ghi hỏng: %s.\n"
+              "Không xác minh được thao tác này có tự duyệt hay không — fail closed.\n%s"
+              % (exc, STOP))
+    if post_final:
         block("Chỉ người dùng được đổi status sang approved. %s" % STOP)
 
     sys.exit(0)

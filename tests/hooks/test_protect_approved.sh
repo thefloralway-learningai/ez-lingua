@@ -131,27 +131,55 @@ run "$HOOK" 2 "Edit chi doi gia tri draft->approved" \
 
 # A2a. status co quote => CHAN
 run "$HOOK" 2 "status co quote: \"approved\"" \
-  "{\"tool_input\":{\"file_path\":\"$DRAFT\",\"new_string\":\"status: \\\"approved\\\"\"}}"
+  "{\"tool_input\":{\"file_path\":\"$DRAFT\",\"old_string\":\"status: draft\",\"new_string\":\"status: \\\"approved\\\"\"}}"
 
 # A2b. status co comment YAML => CHAN
 run "$HOOK" 2 "status co comment: approved # ghi chu" \
-  "{\"tool_input\":{\"file_path\":\"$DRAFT\",\"new_string\":\"status: approved # nguoi dung da duyet\"}}"
+  "{\"tool_input\":{\"file_path\":\"$DRAFT\",\"old_string\":\"status: draft\",\"new_string\":\"status: approved # nguoi dung da duyet\"}}"
 
 # A2c. viet hoa => CHAN
 run "$HOOK" 2 "status viet hoa: APPROVED" \
-  "{\"tool_input\":{\"file_path\":\"$DRAFT\",\"new_string\":\"status: APPROVED\"}}"
+  "{\"tool_input\":{\"file_path\":\"$DRAFT\",\"old_string\":\"status: draft\",\"new_string\":\"status: APPROVED\"}}"
 
 # A2d. quote + comment + viet hoa cung luc => CHAN
 run "$HOOK" 2 "status: 'Accepted'  # xong" \
-  "{\"tool_input\":{\"file_path\":\"$DRAFT\",\"new_string\":\"status: 'Accepted'  # xong\"}}"
+  "{\"tool_input\":{\"file_path\":\"$DRAFT\",\"old_string\":\"status: draft\",\"new_string\":\"status: 'Accepted'  # xong\"}}"
 
 # A2e. chu approved trong comment, khong phai gia tri => CHO QUA
 run "$HOOK" 0 "status: draft # cho nguoi dung approved" \
-  "{\"tool_input\":{\"file_path\":\"$DRAFT\",\"new_string\":\"status: draft # cho nguoi dung approved\"}}"
+  "{\"tool_input\":{\"file_path\":\"$DRAFT\",\"old_string\":\"status: draft\",\"new_string\":\"status: draft # cho nguoi dung approved\"}}"
 
 # MultiEdit chi doi gia tri => CHAN
 run "$HOOK" 2 "MultiEdit chi doi gia tri draft->accepted" \
   "{\"tool_input\":{\"file_path\":\"$DRAFT\",\"edits\":[{\"old_string\":\"draft\",\"new_string\":\"accepted\"}]}}"
+
+echo "== chi doc status trong YAML frontmatter =="
+
+# Code fence minh hoa 'status: approved' trong tai lieu van la draft => CHO QUA
+FENCE_BODY=$(printf -- '---\nstatus: draft\n---\n# Huong dan\n\nVi du frontmatter da duyet:\n\n```\nstatus: approved\n```\n' | jstr)
+run "$HOOK" 0 "Code fence chua 'status: approved' van cho qua" \
+  "{\"tool_input\":{\"file_path\":\"$NEWFILE\",\"content\":$FENCE_BODY}}"
+
+# Van xuoi co dong 'status: approved' o giua bai => CHO QUA
+PROSE2=$(printf -- '---\nstatus: draft\n---\n# Luat\nDoi dong\nstatus: approved\nla viec cua nguoi dung.\n' | jstr)
+run "$HOOK" 0 "Van xuoi chua dong 'status: approved' van cho qua" \
+  "{\"tool_input\":{\"file_path\":\"$NEWFILE\",\"content\":$PROSE2}}"
+
+# File KHONG co frontmatter => khong phai artifact duoc quan ly => CHO QUA
+NOFM=$(printf -- '# Ghi chu\nstatus: approved\n' | jstr)
+run "$HOOK" 0 "File khong co frontmatter: cho qua" \
+  "{\"tool_input\":{\"file_path\":\"$NEWFILE\",\"content\":$NOFM}}"
+
+# Frontmatter HONG (mo --- khong dong) => FAIL CLOSED
+BADFM=$(printf -- '---\nstatus: draft\n# quen dong frontmatter\n' | jstr)
+run "$HOOK" 2 "Frontmatter hong (khong dong): fail closed" \
+  "{\"tool_input\":{\"file_path\":\"$NEWFILE\",\"content\":$BADFM}}"
+
+# File hien tai co frontmatter hong => cung fail closed
+BADFILE="$TMP/bad-frontmatter.md"
+printf -- '---\nstatus: draft\nkhong co dong dong\n' > "$BADFILE"
+run "$HOOK" 2 "File hien tai frontmatter hong: fail closed" \
+  "{\"tool_input\":{\"file_path\":\"$BADFILE\",\"old_string\":\"x\",\"new_string\":\"y\"}}"
 
 echo "== protect-approved-bash.sh =="
 
@@ -211,7 +239,7 @@ run_env() {
 }
 
 run_env "$NOJQ" "$HOOK" 2 "PATH toi gian (chi sh+python3): van chan" \
-  "{\"tool_input\":{\"file_path\":\"$DRAFT\",\"new_string\":\"status: approved\"}}"
+  "{\"tool_input\":{\"file_path\":\"$DRAFT\",\"old_string\":\"status: draft\",\"new_string\":\"status: approved\"}}"
 run_env "$NOJQ" "$HOOK" 0 "PATH toi gian: Edit binh thuong van cho qua" \
   "{\"tool_input\":{\"file_path\":\"$DRAFT\",\"new_string\":\"# chi sua tieu de\"}}"
 run_env "$NOJQ" "$HOOK_BASH" 2 "PATH toi gian: Bash sed van bi chan" \
@@ -229,7 +257,7 @@ run_env "$EMPTY" "$HOOK_BASH" 2 "Thieu python3 (bash hook): fail closed" \
 
 # TMPDIR khong ghi duoc -> hook van phai chan dung (ban bash cu fail open o day).
 TMPRO="$TMP/tmp-readonly"; mkdir -p "$TMPRO"; chmod 500 "$TMPRO"
-printf '%s' "{\"tool_input\":{\"file_path\":\"$DRAFT\",\"new_string\":\"status: approved\"}}" \
+printf '%s' "{\"tool_input\":{\"file_path\":\"$DRAFT\",\"old_string\":\"status: draft\",\"new_string\":\"status: approved\"}}" \
   | TMPDIR="$TMPRO" "$HOOK" >/dev/null 2>&1
 got=$?
 if [ "$got" -eq 2 ]; then
