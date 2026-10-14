@@ -74,7 +74,7 @@ Reviewer khác nhau dùng thang khác nhau: Codex trả `P0`–`P3` hoặc
 Giữ nhãn gốc trong ngoặc để truy ngược: `blocking (codex: high)`. Nhờ vậy sau này kiểm
 lại được quy đổi có quá nặng tay hay quá nhẹ tay không.
 
-### Ngoại lệ: finding về hook bảo vệ status
+### Ngoại lệ: finding về hook bảo vệ status → ADR-0001 §C23
 Hook `protect-approved*` là **guardrail chống nhầm lẫn**, không chống agent cố ý; cổng
 duyệt thật là merge PR vào `master` do người làm (ADR-0001 § "Mô hình mối đe dọa").
 Nên hạ một bậc:

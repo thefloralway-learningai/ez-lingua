@@ -13,7 +13,8 @@ Mức đã quy đổi theo `.agents/skills/qa-review/SKILL.md`; nhãn gốc gi�
 > "approved"` là YAML hợp lệ, `sed 's/draft/approved/'` là lệnh thường, Edit đổi mỗi giá
 > trị là thao tác thường — nên đều là **blocking**: hook hỏng đúng việc nó nhận làm.
 > Chỉ obfuscation có chủ đích (ghép chuỗi, base64) mới là **major**, và đó chính là
-> `known_gap_bash_obfuscation` đang giữ nguyên.
+> `known_gap_bash_obfuscation` đang giữ nguyên. Lằn ranh này do người dùng duyệt ở vòng
+> này → ADR-0001 §C23.
 
 ## Reviewer: codex-adversarial
 `/codex:adversarial-review --base master` · session `01a13b1f-97f8-7680-99f2-74ff67405e64`

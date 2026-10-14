@@ -24,7 +24,7 @@ rỗng mà Stage 1 không dùng tới, và khóa sớm những lựa chọn chư
 
 → Chọn **phương án 2**, tái sử dụng tài sản của starter.
 
-## Quyết định — cấu trúc (§C1–§C16)
+## Quyết định — cấu trúc (§C1–§C23)
 
 | § | Quyết định | Lý do |
 |---|---|---|
@@ -48,6 +48,14 @@ rỗng mà Stage 1 không dùng tới, và khóa sớm những lựa chọn chư
 | C15 | **Việc tự quyết ngoài yêu cầu phải liệt kê ở cuối báo cáo**, mỗi việc một dòng kèm lý do, không gộp vào phần "đã làm" | Agent luôn phải tự quyết vài thứ nhỏ để đi tiếp; vấn đề không nằm ở chỗ nó tự quyết mà ở chỗ quyết định đó lẫn vào phần việc được giao, khiến người dùng không biết chỗ nào cần kiểm. Đây là cùng một gốc với §C13 (truy vết): phân biệt "đã chốt" với "agent tự chọn". Liệt kê riêng thì bác bỏ chỉ tốn một câu |
 
 | C16 | **Bên sửa không kết luận gate đạt**; chỉ ghi "đã xử lý n/n" và "Gate: chờ round n+1". Vòng review kế tiếp quyết định | Ở vòng 2 agent tự ghi "còn 0 blocking, 0 major" ngay trong file review của chính vòng đó — tức vừa sửa vừa tuyên bố mình đã sửa xong. Bên vừa sửa là bên ít có khả năng thấy chỗ mình sửa hụt nhất; và nếu bên sửa tuyên bố được gate thì gate không còn là gate (cùng một lỗi hình thức với §C14: ai bị ràng buộc thì không được cầm chìa khóa) |
+
+| C17 | *(U1)* **Stage 6 (Maintain) không có vòng review riêng.** Metric vượt ngưỡng → mở `intent.md` mới, chạy lại từ Stage 1. **Tạm thời — xem lại khi tới Stage 6** | Review có nghĩa khi có artifact mới để soi. Maintain không sinh artifact, nó sinh *tín hiệu*; phản ứng đúng với tín hiệu là mở lại vòng đời chứ không phải review tại chỗ. Đánh dấu tạm thời vì đây là suy luận trên giấy, chưa vận hành ngày nào |
+| C18 | *(U3)* **Xóa "Điểm đặc thù của app học tiếng Anh" khỏi `AGENTS.md`.** Nội dung gốc giữ nguyên ở `docs/ideas/00-raw-idea.md` | `AGENTS.md` nạp vào **mọi session**, nên mọi giả định sản phẩm nằm trong đó sẽ định hướng PO agent **trước khi** Stage 1 kịp hỏi người dùng câu nào. Đó đúng là thứ Stage 1 phải tự tìm ra, không phải thứ được mớm sẵn |
+| C19 | *(U4)* **Artifact viết từ template; ID (`US-xx`, `AC-xx.y`, `NFR-xx`) giữ ổn định khi sửa** | ID là thứ review và test trỏ tới. Đổi ID làm đứt mọi tham chiếu: review vòng `n` nói `AC-01.2`, vòng `n+1` đánh số lại, hai file không còn khớp và không ai phát hiện ra |
+| C20 | *(U5)* **Không bịa thông tin người dùng chưa nói; thiếu thì ghi vào "Câu hỏi mở"** | Một giả định bịa trông y hệt một sự thật khi đọc lại sau ba tuần. Bắt nó hiện ra thành câu hỏi là cách duy nhất giữ được phân biệt đó |
+| C21 | *(U6)* **Tài liệu tiếng Việt; tên file, ID, frontmatter, tên test, code tiếng Anh.** Nguồn hai lớp: (1) **chỉ thị ban đầu của người dùng 2026-10-14** gồm tên file, ID, frontmatter; (2) **phần mở rộng "tên test, code" do agent đề xuất**, người dùng duyệt ở vòng này (2026-10-14) | Tách hai lớp vì chúng có độ tin cậy khác nhau: lớp 1 là người dùng nói, lớp 2 là agent suy rộng ra rồi mới được duyệt. Chính §C13 bắt được chỗ mở rộng này — xem `docs/learning-log.md` |
+| C22 | *(U7)* **8 dòng điều kiện trong "Sẽ thêm khi cần" là điều kiện DỰ KIẾN, xem lại đầu mỗi stage**, không phải luật cứng. Gồm dòng: *bắt đầu stage Dev → agent chạy trong container không có push token* | Điều kiện viết ở Stage 0 là dự đoán về tương lai chưa xảy ra; duyệt chúng thành luật cứng sẽ ràng buộc mình bằng thông tin cũ nhất mình từng có. Dòng container đến từ § "Mô hình mối đe dọa" — biện pháp đã nêu phải có chỗ bám, nếu không tới lúc đó sẽ quên |
+| C23 | **Lằn ranh xếp mức cho finding về hook**: lọt bằng cách viết thông thường / fail open / chặn nhầm → **blocking**; chỉ obfuscation có chủ đích → **major** | Người dùng duyệt ở vòng này (2026-10-14) khi chốt kết luận round 2 là "5 blocking". Luật cũ ("vượt được hook → major") mâu thuẫn với chính bản ghi ngay dưới nó. Ranh giới thật nằm ở **phải cố ý tới mức nào mới lọt**, không ở "có lọt hay không" |
 
 ## Quyết định — quy trình (§P) — người dùng chốt 2026-10-14
 Các điểm README nói nước đôi, nay đã chốt và đưa vào bảng 6 stage trong `AGENTS.md`:
@@ -77,25 +85,22 @@ Các điểm README nói nước đôi, nay đã chốt và đưa vào bảng 6 
 | O10 | `requirements.md` có hai chủ: bảng 6 stage giao vai Architecture, skill PO lại ghi trong phạm vi của mình — mà quy trình trong skill chỉ tạo `intent.md` (review vòng 1 #3) | `requirements.md` thuộc **vai Product Owner**, tạo ở **đầu Stage 2**. `design.md` + ADR thuộc **vai Architecture**. Quy trình requirements trong skill `product-owner` sẽ thêm khi bắt đầu Stage 2 | Biến `intent.md` thành US/AC là việc sản phẩm — ai viết intent thì hiểu rõ nhất ý định đằng sau. Kiến trúc đọc requirements như đầu vào, không tự đặt ra yêu cầu cho mình rồi tự thỏa mãn |
 | O11 | Mỗi reviewer dùng thang mức độ riêng (Codex trả `P0`–`P3`, `high`/`medium`/`low`), không gộp lại được để tính ngưỡng dừng | Bảng quy đổi trong AGENTS.md: `critical`/`high`/`P0`/`P1` → blocking; `medium`/`P2` → major; `low`/`P3` → minor. Giữ nhãn gốc trong ngoặc. **Giá trị ban đầu, chỉnh theo learning-log** | Ngưỡng dừng ("0 blocking, ≤2 major") chỉ có nghĩa khi mọi reviewer nói cùng một thang. Giữ nhãn gốc để sau này kiểm lại xem quy đổi có quá nặng tay hay không |
 
-## Mục chưa có nguồn — chờ người dùng chọn
-Theo §C13, các luật dưới đây đang nằm trong `AGENTS.md` nhưng **chưa có ADR hay file
-review nào chống lưng**. Chúng mang dấu ⚠ và **không tính là đã chốt**.
+## Mục chưa có nguồn — đã giải quyết hết (2026-10-14)
+Rà soát theo §C13 tìm ra 7 luật trong `AGENTS.md` không có nguồn. Người dùng đã chọn
+xong cả 7; **không còn mục nào mang dấu ⚠**.
 
-Mỗi mục có hai lối ra. **Chưa chọn cái nào — agent không tự sửa.**
-- **(a) Giữ luật** → thêm quyết định tương ứng vào ADR này, gỡ dấu ⚠.
-- **(b) Xóa luật** → gỡ khỏi `AGENTS.md`, không cần ADR.
+| # | Luật | Kết quả |
+|---|---|---|
+| U1 | Stage 6 bỏ trống cột "Ai review" | **(a) giữ** → §C17, đánh dấu tạm thời |
+| U2 | Sơ đồ "Luồng phối hợp" | **(b) xóa** — trùng nguyên nội dung bảng 6 stage |
+| U3 | "Điểm đặc thù của app học tiếng Anh" | **(b) xóa** → §C18 |
+| U4 | Template + ID ổn định | **(a) giữ** → §C19 |
+| U5 | Không bịa thông tin | **(a) giữ** → §C20 |
+| U6 | Quy ước ngôn ngữ | **(a) giữ** → §C21, nguồn ghi hai lớp |
+| U7 | 8 điều kiện "Sẽ thêm khi cần" | **(a) giữ** → §C22, là điều kiện dự kiến |
 
-| # | Luật đang ghi trong AGENTS.md | Nó từ đâu ra | (a) Nếu giữ: thêm quyết định gì vào ADR-0001 | (b) Nếu xóa: mất gì |
-|---|---|---|---|---|
-| U1 | Stage 6 (Maintain) để trống cột "Ai review" | Agent bỏ trống, không ai quyết | §C16: "Maintain không có vòng review riêng; metric vượt ngưỡng thì mở `intent.md` mới và chạy lại từ Stage 1" — hoặc ngược lại, chỉ định một vai review | Không mất gì ngay; nhưng tới Stage 6 sẽ phải quyết, và lúc đó đang vận hành nên vội hơn |
-| U2 | (đã xóa sơ đồ "Luồng phối hợp" ngày 2026-10-14) | — | — | **Đã xử lý**: bỏ sơ đồ, thay bằng câu trỏ về bảng 6 stage |
-| U3 | "Điểm đặc thù của app học tiếng Anh": PO brainstorm user/flow, QA kiểm flashcard + spaced repetition, Security giữ từ vựng không lộ | Giả định sản phẩm trong README gốc, chưa qua Stage 1 | §C17: "giữ làm gợi ý khởi động cho Stage 1, không phải yêu cầu" — kèm điều kiện: khi `intent.md` approved thì xóa khỏi AGENTS.md vì đã có chỗ đúng hơn | Mất gợi ý ban đầu cho PO. Nhưng `docs/ideas/00-raw-idea.md` đã có đủ nội dung gốc, nên gần như không mất gì |
-| U4 | "Mọi artifact viết từ template trong `docs/templates/` và `product-owner/templates/`; giữ nguyên ID `US-xx`, `AC-xx.y`, `NFR-xx` khi sửa" | Kế thừa `reference/asdlc-starter`, chép sang không hỏi | §C18: "artifact phải theo template và ID ổn định, vì ID là thứ review và test trỏ tới — đổi ID làm đứt mọi tham chiếu" | Mất ràng buộc ID ổn định. Rủi ro thật: review vòng n trỏ `AC-01.2`, vòng n+1 agent đánh số lại, hai file không khớp nhau nữa |
-| U5 | "Không bịa thông tin người dùng chưa nói. Thiếu → ghi vào Câu hỏi mở" | Kế thừa `reference/asdlc-starter` | §C19: "agent không điền thay người dùng; chỗ thiếu phải hiện ra thành câu hỏi, vì một giả định bịa trông y hệt một sự thật khi đọc lại sau ba tuần" | Mất lớp bảo vệ chính chống "tài liệu nghe rất hợp lý nhưng không ai nói thế". Khuyên giữ |
-| U6 | "Tài liệu tiếng Việt; tên file, ID, frontmatter, tên test, code tiếng Anh" | Người dùng yêu cầu khi giao việc Stage 0, chưa ghi ADR | §C20: ghi lại đúng yêu cầu đó kèm ngày, nguồn = chỉ thị của người dùng 2026-10-14 | Mất quy ước ngôn ngữ; mỗi agent tự chọn, tài liệu lẫn lộn hai thứ tiếng |
-| U7 | 8 dòng điều kiện trong bảng "Sẽ thêm khi cần" (khi nào thêm `src/`, `harness/`, CI, các vai còn lại) | Agent tự đề xuất ở Stage 0 | §C21: duyệt cả 8 dòng thành điều kiện chính thức — hoặc duyệt từng dòng, dòng nào không đồng ý thì sửa | Việc *hoãn* vẫn có nguồn (§C8), chỉ mất *điều kiện cụ thể*. Khi đó "khi nào thì thêm `harness/`" lại thành câu hỏi mở mỗi lần ai đó hỏi |
-
-Lưu ý khi chọn (a): §C16–§C21 chỉ là số gợi ý, đánh lại cho liền mạch khi ghi thật.
+Dấu ⚠ và quy tắc §C13 vẫn giữ trong `AGENTS.md` để dùng cho luật mới thêm sau này —
+hiện không luật nào đang mang dấu đó.
 
 ## Mô hình mối đe dọa
 Viết ra vì hai vòng review đầu cứ xoay quanh hook mà không hội tụ: thiếu mô hình này
@@ -151,4 +156,4 @@ artifact nào đó, phải ghi ADR riêng cho việc đó, nêu rõ chấp nhậ
 1. Xóa thư mục `reference/`.
 2. Đổi `status: draft` → `status: accepted` ở đầu file này.
 3. Ghi vào `docs/learning-log.md` điều rút ra từ vòng Stage 0.
-4. Xử lý U1–U7 ở mục "Mục chưa có nguồn": chốt rồi ghi ADR, hoặc gỡ khỏi AGENTS.md.
+4. ~~Xử lý U1–U7~~ — xong 2026-10-14, xem mục "Mục chưa có nguồn — đã giải quyết hết".

@@ -5,7 +5,8 @@
 > (`docs/decisions/ADR-<nnnn>-*.md`) hoặc một file review (`docs/reviews/*.md`).
 > **Không ghi quyết định nào không có nguồn.** Mục chưa có nguồn phải mang dấu
 > **⚠ chưa có nguồn** cho tới khi được ghi vào ADR — và không được coi là đã chốt.
-> Nguồn: ADR-0001 §C13.
+> Hiện **không mục nào** mang dấu này (rà soát 2026-10-14, kết quả ở ADR-0001
+> § "Mục chưa có nguồn"). Nguồn: ADR-0001 §C13.
 
 ## Mục đích repo
 Repo thử nghiệm để học AI-native SDLC: multi-agent, subagent, skill, hook. Sản phẩm đích
@@ -30,7 +31,10 @@ Tên stage theo README. Không nhảy bước. Mỗi stage kết thúc khi ngư�
 | 3 | Dev | `docs/tasks.md` → **test viết trước code rồi khóa** → code | Claude Code (vai Dev) | Codex | ADR-0001 §C12 |
 | 4 | Test | e2e, eval, báo cáo kiểm thử trong `docs/reviews/` | Codex (vai QA) | Claude | ADR-0001 §P |
 | 5 | Deploy | PR, AI review, CI gate | vai DevOps | Bên không viết | ADR-0001 §O2 |
-| 6 | Maintain | metric vận hành; vượt ngưỡng → `intent.md` mới | vai Dev | ⚠ chưa có nguồn | — |
+| 6 | Maintain | metric vận hành; vượt ngưỡng → `intent.md` mới | vai Dev | không có vòng review riêng¹ | ADR-0001 §C17 |
+
+¹ Maintain không sinh artifact mới để soi, nó sinh *tín hiệu*; vượt ngưỡng thì mở
+`intent.md` mới và chạy lại từ Stage 1. **Tạm thời — xem lại khi tới Stage 6.**
 
 Hai điểm dễ nhầm (→ ADR-0001 §P): **test viết ở Stage 3 (Dev), TRƯỚC khi viết code**, rồi
 khóa — code phải chạy qua test đó, không sửa test cho vừa code. **Stage 4 (Test) là kiểm
@@ -67,12 +71,6 @@ buộc được "test khóa trước khi viết code". Codex review code. **Xem 
 Đọc bảng 6 stage theo thứ tự — nó chính là luồng. Sơ đồ ASCII cũ đã bỏ vì lặp nguyên nội
 dung bảng (ADR-0001 § "Mục chưa có nguồn" U2).
 
-### Điểm đặc thù của app học tiếng Anh — ⚠ chưa có nguồn
-Giả định sản phẩm lấy từ README gốc, **chưa qua Stage 1**. Đừng coi là yêu cầu.
-PO brainstorm kỹ ai là người dùng và flow tra từ → tạo bài học → ôn tập · QA kiểm
-flashcard có đúng ngữ cảnh và spaced repetition có chạy · Security đảm bảo từ vựng và
-ngữ cảnh người dùng nhập không lộ ra ngoài.
-
 ## Quy tắc
 - **Không bao giờ tự đổi `status` sang `approved`.** Chỉ người dùng làm. Hai hook chặn:
   `protect-approved.sh` (Edit/Write/MultiEdit — soi cả nội dung sắp ghi) và
@@ -87,9 +85,9 @@ ngữ cảnh người dùng nhập không lộ ra ngoài.
   (`ADR-<nnnn>-<slug>.md`), theo `docs/templates/adr.md`. → ADR-0001 §C13
 - Mọi artifact viết từ template: `.agents/skills/product-owner/templates/` (intent,
   requirements), `docs/templates/` (adr, review). Giữ nguyên ID (`US-xx`, `AC-xx.y`,
-  `NFR-xx`) khi sửa. — ⚠ chưa có nguồn (kế thừa từ `reference/asdlc-starter`)
+  `NFR-xx`) khi sửa — ID là thứ review và test trỏ tới. → ADR-0001 §C19
 - Không bịa thông tin người dùng chưa nói. Thiếu → ghi vào "Câu hỏi mở".
-  — ⚠ chưa có nguồn (kế thừa từ `reference/asdlc-starter`)
+  → ADR-0001 §C20
 - **Bên sửa không được kết luận gate đạt.** Sửa xong thì ghi "đã xử lý n/n" và
   "Gate: chờ round <n+1>" — **vòng review kế tiếp** mới quyết định gate có đạt hay
   không. Lý do: bên vừa sửa là bên ít có khả năng thấy chỗ mình sửa hụt nhất.
@@ -99,7 +97,7 @@ ngữ cảnh người dùng nhập không lộ ra ngoài.
   bớt nội dung để vừa giới hạn — thì cuối báo cáo liệt kê ra, mỗi việc một dòng kèm lý
   do, để người dùng bác được. Không gộp lẫn vào phần "đã làm". → ADR-0001 §C15
 - Tài liệu viết **tiếng Việt**; tên file, ID, frontmatter, tên test, code: **tiếng Anh**.
-  — ⚠ chưa có nguồn (yêu cầu người dùng ở Stage 0, chưa ghi ADR)
+  → ADR-0001 §C21
 
 ### Artifact đặt ở đâu → ADR-0001 §O6
 `docs/` **phẳng**: `docs/intent.md`, `docs/requirements.md`, `docs/design.md`,
@@ -139,9 +137,9 @@ chung của repo trước khi đếm — bảng quy đổi ở `.agents/skills/q
 - `tests/hooks/` — test cho hook. Sửa hook thì chạy lại
   `bash tests/hooks/test_protect_approved.sh` trước khi commit.
 
-## Sẽ thêm khi cần — ⚠ điều kiện chưa có nguồn
-Việc **hoãn** các hạng mục này → ADR-0001 §C8; nhưng từng dòng điều kiện dưới đây do
-agent đề xuất ở Stage 0, **chưa ai duyệt riêng** — sửa được, không phải luật.
+## Sẽ thêm khi cần → ADR-0001 §C8, §C22
+Điều kiện dưới đây là **dự kiến, xem lại đầu mỗi stage** — không phải luật cứng. Chúng
+viết ở Stage 0, tức bằng thông tin cũ nhất mình từng có.
 
 | Hạng mục | Điều kiện thêm |
 |---|---|
@@ -153,5 +151,6 @@ agent đề xuất ở Stage 0, **chưa ai duyệt riêng** — sửa được, 
 | `src/` | Khi `requirements.md` **và** `design.md` cùng approved, và test của task đó đã viết xong. |
 | `harness/` (`pipeline.yaml`, `run.py`, `gates/`) | Khi đã chạy tay trọn ≥1 vòng stage và các bước lặp đủ ổn định để script hóa. |
 | `.github/workflows/gates.yml` | Khi `harness/gates/` đã có ít nhất một script chạy được ở local. |
+| **Agent chạy trong container không có push token** | **Khi bắt đầu stage Dev.** Từ § "Mô hình mối đe dọa" (ADR-0001): ranh giới tin cậy thật là credentials, không phải hook. |
 
 Thêm hạng mục nào thì ghi ADR kèm lý do.
