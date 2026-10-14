@@ -4,7 +4,7 @@ date: 2026-10-14
 ---
 # ADR-0001: Cấu trúc repo cho Giai đoạn 0
 
-- Trạng thái: **proposed** — chờ review hội tụ rồi người dùng accept.
+- Trạng thái: **accepted** 
   (Dùng từ vựng ADR `proposed → accepted/superseded`, khớp `docs/templates/adr.md`.)
 
 ## Bối cảnh

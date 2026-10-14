@@ -4,14 +4,15 @@ date: <YYYY-MM-DD>
 ---
 # ADR-<nnnn>: <quyết định>
 
-<!-- Frontmatter `status` ở trên là thứ hook đọc được bằng máy. Đừng bỏ nó và
-     đừng chỉ ghi trạng thái ở dòng "Trạng thái" bên dưới: hook chỉ nhận dạng
-     dòng bắt đầu bằng `status:`, nên một ADR không có frontmatter sẽ được
-     accept rồi sửa tiếp mà không hook nào chặn (review vòng 2, finding R3).
-     Vòng đời: proposed → accepted, hoặc proposed → superseded.
-     KHÔNG tự đổi sang accepted/superseded — chỉ người dùng làm. -->
+<!-- Trạng thái chỉ ghi Ở MỘT CHỖ: frontmatter `status` phía trên.
+     Đừng thêm dòng "Trạng thái:" trong thân bài — ADR-0001 từng có cả hai và
+     hai bản lệch nhau ngay lần accept đầu tiên, mà lúc đó file đã bị hook khóa
+     nên không sửa lại được. Cùng nguyên tắc với "trỏ, đừng tóm tắt".
 
-- Trạng thái: proposed | accepted | superseded (giữ khớp với frontmatter)
+     Vòng đời: proposed → accepted, hoặc proposed → superseded.
+     KHÔNG tự đổi sang accepted/superseded — chỉ người dùng làm; hook chặn agent.
+     Bỏ frontmatter đi thì hook không nhận dạng được file (review vòng 2, R3). -->
+
 - Bối cảnh:
 - Các phương án:
 - Quyết định:
