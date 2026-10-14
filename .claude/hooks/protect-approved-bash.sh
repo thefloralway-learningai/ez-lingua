@@ -11,18 +11,18 @@
 # Xem ADR-0001 §C14.
 
 set -u
-block() { echo "BLOCKED: $1" >&2; exit 2; }
+block() { printf 'BLOCKED: %b\n' "$1" >&2; exit 2; }
 
 input=$(cat)
 
 if command -v jq >/dev/null 2>&1; then
   cmd=$(printf '%s' "$input" | jq -r '.tool_input.command // ""') \
-    || block "hook không đọc được tool_input (jq lỗi). Fail closed."
+    || block "hook không phân tích được tool_input: jq trả lỗi (JSON hỏng hoặc jq hỏng).\nHook fail closed — không kiểm được lệnh này có đổi status hay không.\nHãy DỪNG và báo người dùng."
 elif command -v python3 >/dev/null 2>&1; then
   cmd=$(printf '%s' "$input" | python3 -I -c 'import sys,json; print(json.load(sys.stdin).get("tool_input",{}).get("command") or "")') \
-    || block "hook không đọc được tool_input (python3 lỗi). Fail closed."
+    || block "hook không phân tích được tool_input: python3 trả lỗi (JSON hỏng hoặc python3 hỏng).\nHook fail closed — không kiểm được lệnh này có đổi status hay không.\nHãy DỪNG và báo người dùng."
 else
-  block "hook cần jq hoặc python3 để chạy, không có cái nào. Fail closed."
+  block "môi trường thiếu cả jq lẫn python3 nên hook không đọc được tool_input.\nHook fail closed — cổng duyệt không hoạt động được.\nHãy DỪNG và báo người dùng (cần cài jq hoặc python3)."
 fi
 
 [ -z "$cmd" ] && exit 0

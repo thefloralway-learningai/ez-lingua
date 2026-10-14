@@ -10,7 +10,7 @@ HOOK_BASH="$ROOT/.claude/hooks/protect-approved-bash.sh"
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
 
-pass=0; fail=0
+pass=0; fail=0; known_gap=0
 
 # run <hook> <mong-doi-exit> <ten-case> <json-stdin>
 run() {
@@ -25,6 +25,22 @@ run() {
 }
 
 jstr() { python3 -I -c 'import json,sys; print(json.dumps(sys.stdin.read()))'; }
+
+# known_gap <hook> <exit-thuc-te-hien-nay> <ten-case> <json-stdin>
+# Dùng cho lỗ hổng ĐÃ BIẾT và CHẤP NHẬN: test khóa lại hành vi hiện tại để nếu ai đó
+# vá được thì test đỏ lên và ta biết mà cập nhật tài liệu. KHÔNG tính vào "pass" thường.
+known_gap() {
+  local hook="$1" want="$2" name="$3" json="$4" got
+  printf '%s' "$json" | "$hook" >/dev/null 2>&1
+  got=$?
+  if [ "$got" -eq "$want" ]; then
+    printf '  GAP  %-58s (exit %s, lỗ hổng đã biết)\n' "$name" "$got"; known_gap=$((known_gap+1))
+  else
+    printf '  ???  %-58s (exit %s, truoc day %s)\n' "$name" "$got" "$want"
+    printf '       Lo hong nay co ve da duoc va. Cap nhat ADR-0001 §C14 va bo case nay.\n'
+    fail=$((fail+1))
+  fi
+}
 
 DRAFT="$TMP/draft.md"
 printf -- '---\nstatus: draft\n---\n# noi dung\n' > "$DRAFT"
@@ -125,9 +141,14 @@ run "$HOOK_BASH" 0 "Bash: lenh git status binh thuong" \
 run "$HOOK_BASH" 2 "Bash: sed doi ADR sang accepted" \
   "{\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"sed -i '' 's/status: proposed/status: accepted/' $ADR_PROPOSED\"}}"
 
-# GHI NHAN HAN CHE: ghep chuoi van lot. Hook la best-effort, khong phai ranh gioi
-#     bao mat (ADR-0001 §C14). Test nay khoa lai su that do de khong ai tuong nham.
-run "$HOOK_BASH" 0 "Bash: ghep chuoi VAN LOT (han che da biet, co y)" \
+# LỖ HỔNG ĐÃ BIẾT, CÓ CHỦ ĐÍCH GIỮ LẠI.
+# Hook Bash so khớp chuỗi thô nên lệnh ghép chuỗi (`s=appro; ... ${s}ved`), base64,
+# printf '\x61', biến môi trường hay heredoc đều lọt. Không vá được triệt để bằng
+# cách khớp chuỗi — muốn chặn thật thì phải chặn ở tầng khác (permission, sandbox).
+# Hook là best-effort, KHÔNG phải ranh giới bảo mật: ADR-0001 §C14 và mục
+# "Cổng duyệt thật — quyết định cần người". Test này khóa lại sự thật đó để không ai
+# đọc "N pass" rồi tưởng cổng đã kín.
+known_gap "$HOOK_BASH" 0 "known_gap_bash_obfuscation" \
   "{\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"s=appro; echo \\\"status: \${s}ved\\\" >> $DRAFT\"}}"
 
 echo "== nhanh suy bien: fail closed =="
@@ -172,5 +193,10 @@ run "$HOOK" 2 "JSON hong: fail closed" 'khong-phai-json'
 run "$HOOK_BASH" 2 "JSON hong (bash hook): fail closed" 'khong-phai-json'
 
 echo
-echo "Ket qua: $pass pass, $fail fail"
+if [ "$known_gap" -gt 0 ]; then
+  echo "Ket qua: $pass pass, $fail fail, $known_gap known-gap"
+  echo "  known-gap = lo hong da biet va chap nhan, xem ADR-0001 §C14. Khong tinh la pass."
+else
+  echo "Ket qua: $pass pass, $fail fail"
+fi
 [ "$fail" -eq 0 ]

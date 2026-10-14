@@ -88,6 +88,10 @@ ngữ cảnh người dùng nhập không lộ ra ngoài.
   `NFR-xx`) khi sửa. — ⚠ chưa có nguồn (kế thừa từ `reference/asdlc-starter`)
 - Không bịa thông tin người dùng chưa nói. Thiếu → ghi vào "Câu hỏi mở".
   — ⚠ chưa có nguồn (kế thừa từ `reference/asdlc-starter`)
+- **Việc tự quyết ngoài yêu cầu phải liệt kê ở cuối báo cáo.** Làm gì mà người dùng
+  không nói rõ — chọn một phương án khi đề bài mơ hồ, sửa thêm thứ ngoài phạm vi, bỏ
+  bớt nội dung để vừa giới hạn — thì cuối báo cáo liệt kê ra, mỗi việc một dòng kèm lý
+  do, để người dùng bác được. Không gộp lẫn vào phần "đã làm". → ADR-0001 §C15
 - Tài liệu viết **tiếng Việt**; tên file, ID, frontmatter, tên test, code: **tiếng Anh**.
   — ⚠ chưa có nguồn (yêu cầu người dùng ở Stage 0, chưa ghi ADR)
 
@@ -102,20 +106,20 @@ không theo stage, vì một stage có thể sinh nhiều artifact. Nhiều revi
 → **ghi issue tách theo reviewer**, mỗi reviewer một bảng. Transcript của lần chạy
 reviewer bị lỗi **không** để trong `docs/reviews/` — đưa vào `docs/logs/`.
 
-### Quy đổi mức độ, ngưỡng dừng vòng review → ADR-0001 §O8, §O11
-> Cả hai bảng dưới đây là **giá trị ban đầu**, chỉnh theo `docs/learning-log.md`.
+### Ngưỡng dừng vòng review → ADR-0001 §O8
+> **Giá trị ban đầu**, chỉnh theo `docs/learning-log.md`.
 
-Mỗi reviewer dùng thang riêng (Codex trả `P0`–`P3` hoặc `high`/`medium`/`low`). Quy về
-thang chung trước khi gộp vào file review, giữ nhãn gốc trong ngoặc để truy ngược
-(`blocking (codex: high)`); ngưỡng dừng tính theo thang của repo:
+Mặc định mọi vòng: **0 blocking, ≤2 major, tối đa 3 vòng**. Gate riêng thêm:
 
-| Reviewer nói | Repo ghi | | Artifact | Gate bắt buộc thêm |
-|---|---|---|---|---|
-| `critical`, `high`, `P0`, `P1` | **blocking** | | `requirements.md` | QA đặt được tên test cụ thể cho **100% AC** |
-| `medium`, `P2` | **major** | | `design.md` | Mọi AC có tầng test; mọi lựa chọn stack có ADR |
-| `low`, `P3` | **minor** | | code (Stage 3) | test / lint / SAST đều pass |
+| Artifact | Gate bắt buộc |
+|---|---|
+| `requirements.md` | QA đặt được tên test cụ thể cho **100% AC** |
+| `design.md` | Mọi AC có tầng test tương ứng; mọi lựa chọn stack có ADR |
+| code (Stage 3) | test / lint / SAST đều pass |
 
-Ngưỡng mặc định mọi vòng: **0 blocking, ≤2 major, tối đa 3 vòng**.
+Mỗi reviewer dùng thang mức độ riêng (`P0`–`P3`, `high`/`medium`/`low`). Quy về thang
+chung của repo trước khi đếm — bảng quy đổi ở `.agents/skills/qa-review/SKILL.md`
+§ "Quy đổi mức độ giữa các reviewer". → ADR-0001 §O11
 
 ## Bản đồ thư mục → ADR-0001 §C1, §C2, §C4, §C7
 - `AGENTS.md` — file này, nguồn chung cho cả Claude và Codex.

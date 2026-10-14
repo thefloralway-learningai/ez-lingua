@@ -58,6 +58,22 @@ Kết luận: còn <k> blocking, <m> major (gộp cả hai reviewer).
 - `Vị trí` là ID (`AC-01.2`, `US-03`, `NFR-01`) hoặc tên mục, không phải số dòng.
 - Cột `Xử lý` để trống — người sửa điền `đã sửa` hoặc `phản biện: <lý do>`.
 
+## Quy đổi mức độ giữa các reviewer
+> **Giá trị ban đầu**, chỉnh theo `docs/learning-log.md` (ADR-0001 §O11).
+
+Reviewer khác nhau dùng thang khác nhau: Codex trả `P0`–`P3` hoặc
+`critical`/`high`/`medium`/`low`, repo này dùng `blocking`/`major`/`minor`. Quy đổi
+**trước khi** gộp issue vào file review, nếu không thì ngưỡng dừng vô nghĩa:
+
+| Reviewer nói | Repo ghi |
+|---|---|
+| `critical`, `high`, `P0`, `P1` | **blocking** |
+| `medium`, `P2` | **major** |
+| `low`, `P3` | **minor** |
+
+Giữ nhãn gốc trong ngoặc để truy ngược: `blocking (codex: high)`. Nhờ vậy sau này kiểm
+lại được quy đổi có quá nặng tay hay quá nhẹ tay không.
+
 ## Ngưỡng dừng
 Mặc định: **0 blocking, ≤2 major, tối đa 3 vòng**. Với `requirements.md` thêm gate
 cứng: đặt được tên test cụ thể cho **100% AC**. Đây là giá trị ban đầu — xem

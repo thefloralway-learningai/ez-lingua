@@ -20,7 +20,7 @@
 
 set -u
 
-block() { echo "BLOCKED: $1" >&2; exit 2; }
+block() { printf 'BLOCKED: %b\n' "$1" >&2; exit 2; }
 
 input=$(cat)
 
@@ -31,7 +31,7 @@ if command -v jq >/dev/null 2>&1; then
           .tool_input.new_string // empty,
           ( .tool_input.edits // [] | .[]? | .new_string // empty )
         ] | join("\n") )
-    ') || block "hook không đọc được tool_input (jq lỗi). Fail closed."
+    ') || block "hook không phân tích được tool_input: jq trả lỗi (JSON hỏng hoặc jq hỏng).\nHook fail closed — không thể xác minh thao tác này có tự duyệt hay không.\nHãy DỪNG và báo người dùng."
 elif command -v python3 >/dev/null 2>&1; then
   payload=$(printf '%s' "$input" | python3 -I -c '
 import sys, json
@@ -42,9 +42,9 @@ for e in (d.get("edits") or []):
         parts.append(e.get("new_string") or "")
 print(d.get("file_path") or "")
 print("\n".join(parts))
-') || block "hook không đọc được tool_input (python3 lỗi). Fail closed."
+') || block "hook không phân tích được tool_input: python3 trả lỗi (JSON hỏng hoặc python3 hỏng).\nHook fail closed — không thể xác minh thao tác này có tự duyệt hay không.\nHãy DỪNG và báo người dùng."
 else
-  block "hook cần jq hoặc python3 để chạy, không có cái nào. Fail closed."
+  block "môi trường thiếu cả jq lẫn python3 nên hook không đọc được tool_input.\nHook fail closed — cổng duyệt không hoạt động được.\nHãy DỪNG và báo người dùng (cần cài jq hoặc python3)."
 fi
 
 file=$(printf '%s' "$payload" | head -n 1)
