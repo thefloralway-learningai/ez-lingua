@@ -124,7 +124,55 @@ else
   printf '  FAIL %-56s (exit %s, mong doi 1)\n' "Base khong ton tai: bao loi" "$got"; fail=$((fail+1))
 fi
 
-# 11. KNOWN GAP: commit do CHINH NGUOI dung doi status cung bi bao FAIL.
+# 12. git mv file da approved => FAIL (rename = D + A, bat o nhanh D)
+new_repo r12
+printf -- '---\nstatus: approved\n---\n# x\n' > intent.md
+printf -- 'giu cho repo khong rong\n' > keep.md
+git add -A && git commit -qm base
+git checkout -qb work
+git mv intent.md renamed.md
+git commit -qm rename
+check 1 "git mv file da approved"
+
+# 13. 'status : approved' (khoang trang truoc dau hai cham) => van bat duoc
+new_repo r13
+printf -- '---\nstatus : approved\n---\n# x\n' > intent.md
+git add -A && git commit -qm base
+git checkout -qb work
+printf -- '---\nstatus : approved\n---\n# x bi sua\n' > intent.md
+git commit -qam edit
+check 1 "status : approved (khoang trang quanh dau hai cham)"
+
+# 14. Ghi qua Bash vao file da approved => gate van bat (hook khong con canh Bash)
+new_repo r14
+printf -- '---\nstatus: approved\n---\n# noi dung goc\n' > intent.md
+git add -A && git commit -qm base
+git checkout -qb work
+sed -i '' 's/noi dung goc/bi sua qua shell/' intent.md 2>/dev/null || sed -i 's/noi dung goc/bi sua qua shell/' intent.md
+git commit -qam "sua qua bash"
+check 1 "Ghi qua Bash vao file da approved: gate bat duoc"
+
+# 15. Frontmatter hong tren base => khong ket luan duoc, khong chan PR
+new_repo r15
+printf -- '---\nstatus: approved\nquen dong frontmatter\n' > broken.md
+git add -A && git commit -qm base
+git checkout -qb work
+printf -- '---\nstatus: approved\nquen dong frontmatter, sua them\n' > broken.md
+git commit -qam edit
+check 0 "Frontmatter hong tren base: khong chan"
+
+# 16. Khong con hook Bash trong settings.json — thiet ke co chu dich sau review kiem
+#      chung: hook Bash chan nham lenh vo hai, viec canh ghi-qua-Bash thuoc ve gate nay.
+#      Neu ai do them lai, test nay bao de con cap nhat ADR-0001.
+if grep -q '"matcher": "Bash"' "$ROOT/.claude/settings.json" 2>/dev/null; then
+  printf '  ???  %-56s\n' "khong_co_hook_bash"
+  printf '       Hook Bash da duoc them lai. Cap nhat ADR-0001 mo hinh moi de doa.\n'
+  fail=$((fail+1))
+else
+  printf '  ok   %-56s (khong co matcher Bash)\n' "khong_co_hook_bash"; pass=$((pass+1))
+fi
+
+# 17. KNOWN GAP: commit do CHINH NGUOI dung doi status cung bi bao FAIL.
 #     Gate khong phan biet duoc "nguoi duyet" voi "agent sua trom" vi dung chung
 #     credentials git. Nguoi kiem bang mat khi duyet PR. Xem docstring cua gate.
 new_repo r11

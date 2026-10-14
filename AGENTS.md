@@ -76,7 +76,8 @@ dung bảng (ADR-0001 § "Mục chưa có nguồn" U2).
   `protect-approved.sh` (Edit/Write/MultiEdit — soi cả nội dung sắp ghi) và
   `protect-approved-bash.sh` (lệnh shell). Cả hai **fail closed**. Chúng là lớp
   guardrail **chống nhầm lẫn** trên đường Edit/Write/MultiEdit, không chống agent cố ý.
-  Ghi qua Bash nằm **ngoài phạm vi hook** — do `harness/gates/check_status.py` canh.
+  Ghi qua Bash **không bị chặn trong session** — do `harness/gates/check_status.py` bắt
+  trước khi mở PR. (Hook Bash đã xóa: nó chặn nhầm lệnh vô hại.)
   Cổng duyệt thật là **merge PR vào `master` do người làm**.
   Test: `tests/hooks/test_protect_approved.sh`.
   → ADR-0001 §C9, §C14, § "Mô hình mối đe dọa"
@@ -136,6 +137,8 @@ Quy đổi mức độ: xem `.agents/skills/qa-review/SKILL.md`. Đó là **ngu�
   `agents/qa-analyst.md`, `hooks/`, `settings.json`.
 - `docs/` — bộ nhớ dự án: `ideas/` (chỉ đọc), `templates/`, `decisions/`, `reviews/`,
   `logs/` (transcript lần chạy lỗi), `learning-log.md`.
+- `harness/lib/frontmatter.py` — parser `status` dùng chung cho hook và gate. **Một bản
+  duy nhất**: đừng viết lại logic đọc frontmatter ở nơi khác.
 - `harness/gates/` — gate chạy ngoài session, trả exit code.
   `check_status.py`: nhánh có sửa file đã duyệt trên `master` không.
 - `tests/` — `hooks/` và `gates/`. Sửa hook hay gate thì chạy lại test tương ứng

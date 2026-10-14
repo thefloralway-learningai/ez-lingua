@@ -20,56 +20,19 @@ KNOWN GAP (Stage 0, chưa tự động hóa được):
 """
 
 import argparse
+import os
 import subprocess
 import sys
 
-FINAL_STATES = {"approved", "accepted", "superseded"}
-FENCE = "---"
+# Parser status dùng chung với .claude/hooks/protect_approved.py — một bản duy nhất.
+sys.path.insert(0, os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "lib"))
+from frontmatter import BadFrontmatter, FINAL_STATES, status_of  # noqa: E402
 
 
 def run(args, repo):
     return subprocess.run(args, cwd=repo, stdout=subprocess.PIPE,
                           stderr=subprocess.PIPE, text=True)
-
-
-def normalize(raw):
-    """Giống hệt normalize() của hook: bỏ comment, bỏ quote, trim, lowercase."""
-    value = raw.strip()
-    if value.startswith("#"):
-        return ""
-    out, quote = [], None
-    for i, ch in enumerate(value):
-        if quote:
-            out.append(ch)
-            if ch == quote:
-                quote = None
-        elif ch in "\"'":
-            quote = ch
-            out.append(ch)
-        elif ch == "#" and (i == 0 or value[i - 1] in " \t"):
-            break
-        else:
-            out.append(ch)
-    value = "".join(out).strip()
-    if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
-        value = value[1:-1].strip()
-    return value.lower()
-
-
-def frontmatter_status(text):
-    """status trong YAML frontmatter, hoặc None. Chỉ xét khối đầu file."""
-    lines = text.split("\n")
-    if not lines or lines[0].strip() != FENCE:
-        return None
-    for i in range(1, len(lines)):
-        stripped = lines[i].strip()
-        if stripped in (FENCE, "..."):
-            for line in lines[1:i]:
-                low = line.strip().lower()
-                if low.startswith("status:"):
-                    return normalize(line.split(":", 1)[1])
-            return None
-    return None  # mở mà không đóng: không phải frontmatter hợp lệ
 
 
 def main():
@@ -85,18 +48,34 @@ def main():
         return 1
     base_sha = merge_base.stdout.strip()
 
-    changed = run(["git", "diff", "--name-only", "%s...HEAD" % a.base], a.repo)
+    # --no-renames: một lần đổi tên hiện thành D (đường cũ) + A (đường mới), nên
+    # `git mv` một file đã duyệt vẫn bị bắt ở nhánh D. Nếu để git gộp thành R thì
+    # chỉ thấy đường đích, `git show base:<đích>` thất bại và file lọt như file mới
+    # (review kiểm chứng sau round 3, finding #1).
+    changed = run(["git", "diff", "--name-status", "--no-renames",
+                   "%s...HEAD" % base_sha], a.repo)
     if changed.returncode != 0:
         sys.stderr.write("LỖI: git diff thất bại.\n%s\n" % changed.stderr.strip())
         return 1
 
-    files = [f for f in changed.stdout.splitlines() if f.strip()]
-    offenders = []
-    for path in files:
+    files, offenders = [], []
+    for line in changed.stdout.splitlines():
+        if not line.strip():
+            continue
+        parts = line.split("\t")
+        if len(parts) < 2:
+            continue
+        code, path = parts[0].strip(), parts[1]
+        files.append(path)
+        if code[:1] not in ("M", "D"):
+            continue  # A = file mới, chưa từng có trên base
         show = run(["git", "show", "%s:%s" % (base_sha, path)], a.repo)
         if show.returncode != 0:
-            continue  # file mới, chưa có trên base
-        status = frontmatter_status(show.stdout)
+            continue
+        try:
+            status = status_of(show.stdout)
+        except BadFrontmatter:
+            continue  # frontmatter hỏng trên base: không kết luận được, không chặn PR
         if status in FINAL_STATES:
             offenders.append((path, status))
 

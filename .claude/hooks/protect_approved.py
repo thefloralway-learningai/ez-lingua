@@ -29,81 +29,26 @@ Từ vựng: artifact draft→approved; ADR proposed→accepted/superseded.
 """
 
 import json
-import re
+import os
 import sys
 
-FINAL_STATES = {"approved", "accepted", "superseded"}
-STATUS_LINE = re.compile(r"^[ \t]*status[ \t]*:[ \t]*(.*)$", re.IGNORECASE)
-FENCE = "---"
-
 STOP = "Hãy DỪNG và báo người dùng."
+
+# Parser status dùng chung với harness/gates/check_status.py — một bản duy nhất,
+# để hai nơi không lệch nhau (review kiểm chứng sau round 3, finding #2).
+_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(_ROOT, "harness", "lib"))
+try:
+    from frontmatter import BadFrontmatter, is_final
+except Exception as _exc:  # không import được → fail closed
+    sys.stderr.write("BLOCKED: hook không nạp được harness/lib/frontmatter.py (%s).\n"
+                     "Không xác minh được thao tác — fail closed.\n%s\n" % (_exc, STOP))
+    sys.exit(2)
 
 
 def block(msg):
     sys.stderr.write("BLOCKED: %s\n" % msg)
     sys.exit(2)
-
-
-def normalize(raw):
-    """Chuẩn hóa giá trị status của YAML về chuỗi so sánh được.
-
-    Bỏ comment `# ...`, bỏ quote, trim, lowercase. `status: "Approved"  # ok`
-    và `status: approved` phải cho ra cùng một kết quả.
-    """
-    value = raw.strip()
-    if value.startswith("#"):
-        return ""
-    # Comment nằm ngoài quote: cắt từ dấu # đầu tiên không nằm trong quote.
-    out, quote = [], None
-    for i, ch in enumerate(value):
-        if quote:
-            out.append(ch)
-            if ch == quote:
-                quote = None
-        elif ch in "\"'":
-            quote = ch
-            out.append(ch)
-        elif ch == "#" and (i == 0 or value[i - 1] in " \t"):
-            break
-        else:
-            out.append(ch)
-    value = "".join(out).strip()
-    if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
-        value = value[1:-1].strip()
-    return value.lower()
-
-
-class BadFrontmatter(Exception):
-    """Frontmatter mở bằng `---` nhưng không đóng — không kết luận được."""
-
-
-def frontmatter(text):
-    """Trả về các dòng trong YAML frontmatter, hoặc None nếu file không có.
-
-    Frontmatter phải mở bằng `---` ở DÒNG ĐẦU và đóng bằng `---` hoặc `...`.
-    Mở mà không đóng → BadFrontmatter (fail closed).
-    """
-    if not text:
-        return None
-    lines = text.split("\n")
-    if not lines or lines[0].strip() != FENCE:
-        return None
-    for i in range(1, len(lines)):
-        if lines[i].strip() in (FENCE, "..."):
-            return lines[1:i]
-    raise BadFrontmatter("mở bằng `---` ở dòng đầu nhưng không có dòng `---` đóng lại")
-
-
-def is_final(text):
-    """File có đang ở trạng thái kết thúc không? Chỉ xét frontmatter."""
-    block = frontmatter(text)
-    if block is None:
-        return False  # không có frontmatter → không phải artifact được quản lý
-    for line in block:
-        m = STATUS_LINE.match(line)
-        if m and normalize(m.group(1)) in FINAL_STATES:
-            return True
-    return False
 
 
 def apply_edit(text, old, new, replace_all):

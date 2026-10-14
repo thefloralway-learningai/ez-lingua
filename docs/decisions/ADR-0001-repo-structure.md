@@ -122,11 +122,21 @@ canh được mọi cách ghi file. Phân lại:
 | Lớp | Canh gì | Không canh gì |
 |---|---|---|
 | `protect_approved.py` (hook) | Đường **Edit/Write/MultiEdit** trong một session. Đây là phạm vi chính thức của hook | Mọi thứ khác |
-| `protect_approved_bash.py` (hook) | **Chỉ là nhắc nhở best-effort.** Bắt các lệnh shell thẳng thừng, không hứa hẹn gì hơn — ghi rõ trong comment đầu file | Không được tính là lớp bảo vệ khi xếp mức finding |
+| ~~`protect_approved_bash.py` (hook)~~ | **Đã xóa** sau review kiểm chứng (2026-10-14). Lý do: ghi qua Bash đã nằm ngoài phạm vi hook, mà giữ lại thì chỉ sinh false positive — nó chặn cả `python3 -m py_compile .claude/hooks/protect_approved.py` chỉ vì tên file chứa chữ "approved". Một guardrail báo động giả là guardrail người ta sẽ tắt | — |
 | `harness/gates/check_status.py` (gate) | **Ghi qua Bash, và mọi đường khác.** Chạy trên git, ngoài session, nên không quan tâm thay đổi đến từ công cụ nào | Không phân biệt được người duyệt với agent (known-gap, xem docstring) |
 
-Vì vậy finding dạng "có cách ghi qua Bash mà `protect_approved_bash.py` không bắt" là
-**ngoài phạm vi hook** — thuộc về gate. Vòng đuổi theo từng lệnh shell dừng ở đây.
+Vì vậy finding dạng "có cách ghi qua Bash mà hook không bắt" là **ngoài phạm vi hook** —
+thuộc về gate. Vòng đuổi theo từng lệnh shell dừng ở đây.
+
+**Trong session, ghi qua Bash không bị chặn gì cả** — đó là trạng thái đã chọn, không
+phải thiếu sót. Nó bị phát hiện ở `harness/gates/check_status.py` trước khi mở PR.
+Ghi nhận trong `tests/hooks/` dưới dạng `bash_writes_not_blocked_in_session`, và
+`tests/gates/` có case `khong_co_hook_bash` báo lên nếu ai đó thêm lại hook Bash.
+
+**Xóa một guardrail cũng là một quyết định guardrail.** Hook Bash từng là lớp thứ hai,
+nhưng một lớp bắt nhầm việc vô hại làm hỏng cả hệ thống: người ta sẽ tắt nó, hoặc tệ
+hơn, học cách đi vòng rồi mang thói quen đó sang chỗ khác. Ít lớp mà đúng việc hơn là
+nhiều lớp mà ồn.
 
 **Hệ quả cho việc xếp mức độ:** luật quy đổi nằm ở `.agents/skills/qa-review/SKILL.md`
 § "Ngoại lệ: finding về hook bảo vệ status" — **nguồn duy nhất**, không chép lại ở đây

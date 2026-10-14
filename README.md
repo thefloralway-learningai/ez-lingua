@@ -44,10 +44,14 @@ AGENTS.md            nguồn chung: quy trình, agent, quy tắc
 CLAUDE.md            @AGENTS.md + phần riêng Claude Code
 .agents/skills/      kiến thức vai trò, dùng chung cho Claude và Codex
 .claude/             riêng Claude Code: skills (symlink), agents, hooks, settings
+harness/             lib/frontmatter.py + gates/check_status.py (chạy ngoài session)
 docs/                bộ nhớ dự án: ideas, templates, decisions, reviews, learning-log
+tests/               test cho hook và gate
 ```
-Thư mục chưa có (`src/`, `harness/`, `.github/workflows/`) và điều kiện để thêm: xem
-`AGENTS.md` § "Sẽ thêm khi cần".
+Chạy `python3 harness/gates/check_status.py` trước khi mở PR.
+
+Chưa có và điều kiện để thêm (xem `AGENTS.md` § "Sẽ thêm khi cần"): `src/`,
+`harness/pipeline.yaml`, `harness/run.py`, `.github/workflows/`.
 
 ## Tài liệu tham khảo
 - [Claude](https://claude.ai/)

@@ -6,7 +6,6 @@
 set -u
 ROOT=$(cd "$(dirname "$0")/../.." && pwd)
 HOOK="$ROOT/.claude/hooks/protect-approved.sh"
-HOOK_BASH="$ROOT/.claude/hooks/protect-approved-bash.sh"
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
 
@@ -26,20 +25,12 @@ run() {
 
 jstr() { python3 -I -c 'import json,sys; print(json.dumps(sys.stdin.read()))'; }
 
-# known_gap <hook> <exit-thuc-te-hien-nay> <ten-case> <json-stdin>
-# Dùng cho lỗ hổng ĐÃ BIẾT và CHẤP NHẬN: test khóa lại hành vi hiện tại để nếu ai đó
-# vá được thì test đỏ lên và ta biết mà cập nhật tài liệu. KHÔNG tính vào "pass" thường.
-known_gap() {
-  local hook="$1" want="$2" name="$3" json="$4" got
-  printf '%s' "$json" | "$hook" >/dev/null 2>&1
-  got=$?
-  if [ "$got" -eq "$want" ]; then
-    printf '  GAP  %-58s (exit %s, lỗ hổng đã biết)\n' "$name" "$got"; known_gap=$((known_gap+1))
-  else
-    printf '  ???  %-58s (exit %s, truoc day %s)\n' "$name" "$got" "$want"
-    printf '       Lo hong nay co ve da duoc va. Cap nhat ADR-0001 §C14 va bo case nay.\n'
-    fail=$((fail+1))
-  fi
+# gap_note <ten> <mo-ta>: ghi nhận một khoảng trống ĐÃ BIẾT và CHẤP NHẬN — không
+# phải lỗi, không tính vào "pass".
+gap_note() {
+  printf '  GAP  %-58s\n' "$1"
+  printf '       %s\n' "$2"
+  known_gap=$((known_gap+1))
 }
 
 DRAFT="$TMP/draft.md"
@@ -181,41 +172,11 @@ printf -- '---\nstatus: draft\nkhong co dong dong\n' > "$BADFILE"
 run "$HOOK" 2 "File hien tai frontmatter hong: fail closed" \
   "{\"tool_input\":{\"file_path\":\"$BADFILE\",\"old_string\":\"x\",\"new_string\":\"y\"}}"
 
-echo "== protect-approved-bash.sh =="
-
-# 10. sed doi status => CHAN
-run "$HOOK_BASH" 2 "Bash: sed -i doi draft thanh approved" \
-  "{\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"sed -i '' 's/status: draft/status: approved/' $DRAFT\"}}"
-
-# 11. echo >> file => CHAN
-run "$HOOK_BASH" 2 "Bash: echo 'status: approved' >> file" \
-  "{\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"echo 'status: approved' >> $DRAFT\"}}"
-
-# 12. lenh binh thuong => CHO QUA
-run "$HOOK_BASH" 0 "Bash: lenh git status binh thuong" \
-  '{"tool_name":"Bash","tool_input":{"command":"git status --short"}}'
-
-# R2. sed doi gia tri, lenh KHONG chua chu "status" => CHAN
-run "$HOOK_BASH" 2 "Bash: sed doi gia tri, khong co chu status" \
-  "{\"tool_input\":{\"command\":\"sed -i '' s/draft/approved/ docs/intent.md\"}}"
-
-# Lenh chi DOC co chu approved => CHO QUA
-run "$HOOK_BASH" 0 "Bash: grep approved (chi doc)" \
-  '{"tool_input":{"command":"grep -rn approved docs/"}}'
-
-# Bash: chan ca accepted
-run "$HOOK_BASH" 2 "Bash: sed doi ADR sang accepted" \
-  "{\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"sed -i '' 's/status: proposed/status: accepted/' $ADR_PROPOSED\"}}"
-
-# LỖ HỔNG ĐÃ BIẾT, CÓ CHỦ ĐÍCH GIỮ LẠI.
-# Hook Bash so khớp chuỗi thô nên lệnh ghép chuỗi (`s=appro; ... ${s}ved`), base64,
-# printf '\x61', biến môi trường hay heredoc đều lọt. Không vá được triệt để bằng
-# cách khớp chuỗi — muốn chặn thật thì phải chặn ở tầng khác (permission, sandbox).
-# Hook là best-effort, KHÔNG phải ranh giới bảo mật: ADR-0001 §C14 và mục
-# "Cổng duyệt thật — quyết định cần người". Test này khóa lại sự thật đó để không ai
-# đọc "N pass" rồi tưởng cổng đã kín.
-known_gap "$HOOK_BASH" 0 "known_gap_bash_obfuscation" \
-  "{\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"s=appro; echo \\\"status: \${s}ved\\\" >> $DRAFT\"}}"
+echo "== ngoai pham vi hook =="
+gap_note "bash_writes_not_blocked_in_session" \
+  "Ghi qua Bash KHONG bi chan trong session (hook Bash da xoa sau review kiem chung
+       sau round 3: no chan nham lenh vo hai nhu 'python3 -m py_compile ...approved.py').
+       Duoc phat hien o gate: harness/gates/check_status.py. Xem ADR-0001 mo hinh moi de doa."
 
 echo "== nhanh suy bien: PATH toi gian, thieu python3, TMPDIR hong, JSON hong =="
 
@@ -242,8 +203,6 @@ run_env "$NOJQ" "$HOOK" 2 "PATH toi gian (chi sh+python3): van chan" \
   "{\"tool_input\":{\"file_path\":\"$DRAFT\",\"old_string\":\"status: draft\",\"new_string\":\"status: approved\"}}"
 run_env "$NOJQ" "$HOOK" 0 "PATH toi gian: Edit binh thuong van cho qua" \
   "{\"tool_input\":{\"file_path\":\"$DRAFT\",\"new_string\":\"# chi sua tieu de\"}}"
-run_env "$NOJQ" "$HOOK_BASH" 2 "PATH toi gian: Bash sed van bi chan" \
-  "{\"tool_input\":{\"command\":\"sed -i '' 's/draft/approved/' $DRAFT; echo status\"}}"
 
 # 17-18. Khong co ca jq lan python3 -> FAIL CLOSED (exit 2), khong duoc cho qua.
 EMPTY="$TMP/bin-empty"; mkdir -p "$EMPTY"
@@ -252,8 +211,6 @@ for b in sh; do
 done
 run_env "$EMPTY" "$HOOK" 2 "Thieu python3: fail closed (exit 2, khong phai 127)" \
   "{\"tool_input\":{\"file_path\":\"$DRAFT\",\"new_string\":\"# vo hai\"}}"
-run_env "$EMPTY" "$HOOK_BASH" 2 "Thieu python3 (bash hook): fail closed" \
-  '{"tool_input":{"command":"ls"}}'
 
 # TMPDIR khong ghi duoc -> hook van phai chan dung (ban bash cu fail open o day).
 TMPRO="$TMP/tmp-readonly"; mkdir -p "$TMPRO"; chmod 500 "$TMPRO"
@@ -269,12 +226,11 @@ chmod 700 "$TMPRO"
 
 # JSON hong -> FAIL CLOSED.
 run "$HOOK" 2 "JSON hong: fail closed" 'khong-phai-json'
-run "$HOOK_BASH" 2 "JSON hong (bash hook): fail closed" 'khong-phai-json'
 
 echo
 if [ "$known_gap" -gt 0 ]; then
   echo "Ket qua: $pass pass, $fail fail, $known_gap known-gap"
-  echo "  known-gap = lo hong da biet va chap nhan, xem ADR-0001 §C14. Khong tinh la pass."
+  echo "  known-gap = khoang trong da biet va chap nhan. Khong tinh la pass."
 else
   echo "Ket qua: $pass pass, $fail fail"
 fi
