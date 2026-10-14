@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: accepted
 date: 2026-10-14
 ---
 # ADR-0001: Cấu trúc repo cho Giai đoạn 0
