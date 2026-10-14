@@ -79,11 +79,14 @@ Hook `protect-approved*` là **guardrail chống nhầm lẫn**, không chống 
 duyệt thật là merge PR vào `master` do người làm (ADR-0001 § "Mô hình mối đe dọa").
 Nên hạ một bậc:
 
+Ranh giới nằm ở **phải cố ý tới mức nào mới lọt**, không ở "có lọt hay không":
+
 | Loại finding | Mức |
 |---|---|
-| "Có cách vượt được hook" (ghép chuỗi, mã hóa, viết script rồi chạy…) | **major**, kể cả khi reviewer gắn `high`/`P1` |
-| "Hook fail open / không chạy đúng trong điều kiện bình thường" | **blocking** — hỏng đúng việc nó nhận làm |
-| "Hook chặn nhầm thao tác vô hại" | **blocking** — gate hay báo động giả thì người ta sẽ tắt nó |
+| Lọt bằng **cách viết thông thường** — `status: "approved"` (YAML hợp lệ), `sed 's/draft/approved/'`, Edit đổi mỗi giá trị | **blocking** — hook hỏng đúng việc nó nhận làm |
+| Hook **fail open** (thiếu công cụ, input hỏng, môi trường suy biến) | **blocking** |
+| Hook **chặn nhầm** thao tác vô hại | **blocking** — gate hay báo động giả thì người ta sẽ tắt nó |
+| Lọt bằng **obfuscation có chủ đích** — ghép chuỗi, base64, viết script rồi chạy | **major**, kể cả khi reviewer gắn `high`/`P1` |
 
 Không áp ngoại lệ này cho gate khác trừ khi gate đó cũng có mô hình mối đe dọa viết ra.
 

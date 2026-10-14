@@ -90,6 +90,10 @@ ngữ cảnh người dùng nhập không lộ ra ngoài.
   `NFR-xx`) khi sửa. — ⚠ chưa có nguồn (kế thừa từ `reference/asdlc-starter`)
 - Không bịa thông tin người dùng chưa nói. Thiếu → ghi vào "Câu hỏi mở".
   — ⚠ chưa có nguồn (kế thừa từ `reference/asdlc-starter`)
+- **Bên sửa không được kết luận gate đạt.** Sửa xong thì ghi "đã xử lý n/n" và
+  "Gate: chờ round <n+1>" — **vòng review kế tiếp** mới quyết định gate có đạt hay
+  không. Lý do: bên vừa sửa là bên ít có khả năng thấy chỗ mình sửa hụt nhất.
+  → ADR-0001 §C16
 - **Việc tự quyết ngoài yêu cầu phải liệt kê ở cuối báo cáo.** Làm gì mà người dùng
   không nói rõ — chọn một phương án khi đề bài mơ hồ, sửa thêm thứ ngoài phạm vi, bỏ
   bớt nội dung để vừa giới hạn — thì cuối báo cáo liệt kê ra, mỗi việc một dòng kèm lý

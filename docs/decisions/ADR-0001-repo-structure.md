@@ -1,10 +1,11 @@
 ---
-status: draft
+status: proposed
 date: 2026-10-14
 ---
 # ADR-0001: Cấu trúc repo cho Giai đoạn 0
 
-- Trạng thái: **draft** — chờ Codex review trước khi accept.
+- Trạng thái: **proposed** — chờ review hội tụ rồi người dùng accept.
+  (Dùng từ vựng ADR `proposed → accepted/superseded`, khớp `docs/templates/adr.md`.)
 
 ## Bối cảnh
 Repo ở Stage 0: chưa có code, bước kế tiếp là Stage 1 (Plan). Bản draft cấu trúc
@@ -23,7 +24,7 @@ rỗng mà Stage 1 không dùng tới, và khóa sớm những lựa chọn chư
 
 → Chọn **phương án 2**, tái sử dụng tài sản của starter.
 
-## Quyết định — cấu trúc (§C1–§C15)
+## Quyết định — cấu trúc (§C1–§C16)
 
 | § | Quyết định | Lý do |
 |---|---|---|
@@ -45,6 +46,8 @@ rỗng mà Stage 1 không dùng tới, và khóa sớm những lựa chọn chư
 | C14 | **Hook chỉ là lớp best-effort, không phải ranh giới bảo mật.** `protect-approved.sh` đọc cả nội dung sắp ghi trong `tool_input` (Write `.content`, Edit `.new_string`, MultiEdit `.edits[].new_string`) và chặn mọi thao tác của agent đưa status về một **trạng thái kết thúc** — `approved` (artifact), `accepted`/`superseded` (ADR); `protect-approved-bash.sh` chặn best-effort lệnh shell chứa "status" cùng một trạng thái kết thúc. Cả hai **fail closed**. Cổng duyệt thật: xem mục "Cổng duyệt thật — quyết định cần người" | Codex adversarial review (`repo-structure-round-1.md` #1) chứng minh hook cũ chỉ đọc nội dung *hiện tại* của file, nên một Edit `draft` → `approved` vẫn lọt — agent tự duyệt được sản phẩm của chính nó rồi khóa file lại. Vá xong thì đường vòng vẫn còn (ghép chuỗi, base64, viết script rồi chạy), nên không được coi hook là ranh giới tin cậy: nó chỉ biến việc lách luật thành hành vi phải cố ý |
 
 | C15 | **Việc tự quyết ngoài yêu cầu phải liệt kê ở cuối báo cáo**, mỗi việc một dòng kèm lý do, không gộp vào phần "đã làm" | Agent luôn phải tự quyết vài thứ nhỏ để đi tiếp; vấn đề không nằm ở chỗ nó tự quyết mà ở chỗ quyết định đó lẫn vào phần việc được giao, khiến người dùng không biết chỗ nào cần kiểm. Đây là cùng một gốc với §C13 (truy vết): phân biệt "đã chốt" với "agent tự chọn". Liệt kê riêng thì bác bỏ chỉ tốn một câu |
+
+| C16 | **Bên sửa không kết luận gate đạt**; chỉ ghi "đã xử lý n/n" và "Gate: chờ round n+1". Vòng review kế tiếp quyết định | Ở vòng 2 agent tự ghi "còn 0 blocking, 0 major" ngay trong file review của chính vòng đó — tức vừa sửa vừa tuyên bố mình đã sửa xong. Bên vừa sửa là bên ít có khả năng thấy chỗ mình sửa hụt nhất; và nếu bên sửa tuyên bố được gate thì gate không còn là gate (cùng một lỗi hình thức với §C14: ai bị ràng buộc thì không được cầm chìa khóa) |
 
 ## Quyết định — quy trình (§P) — người dùng chốt 2026-10-14
 Các điểm README nói nước đôi, nay đã chốt và đưa vào bảng 6 stage trong `AGENTS.md`:
