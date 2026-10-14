@@ -123,6 +123,36 @@ run "$HOOK" 0 "Edit sua noi dung khac cua ADR proposed" \
 run "$HOOK" 0 "Write file moi status proposed van cho qua" \
   "{\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\"$NEWFILE\",\"content\":$(printf -- '---\nstatus: proposed\n---\n' | jstr)}}"
 
+echo "== bypass tu review vong 2 =="
+
+# R1. Edit chi doi GIA TRI, new_string khong chua chu "status" => CHAN
+run "$HOOK" 2 "Edit chi doi gia tri draft->approved" \
+  "{\"tool_input\":{\"file_path\":\"$DRAFT\",\"old_string\":\"draft\",\"new_string\":\"approved\"}}"
+
+# A2a. status co quote => CHAN
+run "$HOOK" 2 "status co quote: \"approved\"" \
+  "{\"tool_input\":{\"file_path\":\"$DRAFT\",\"new_string\":\"status: \\\"approved\\\"\"}}"
+
+# A2b. status co comment YAML => CHAN
+run "$HOOK" 2 "status co comment: approved # ghi chu" \
+  "{\"tool_input\":{\"file_path\":\"$DRAFT\",\"new_string\":\"status: approved # nguoi dung da duyet\"}}"
+
+# A2c. viet hoa => CHAN
+run "$HOOK" 2 "status viet hoa: APPROVED" \
+  "{\"tool_input\":{\"file_path\":\"$DRAFT\",\"new_string\":\"status: APPROVED\"}}"
+
+# A2d. quote + comment + viet hoa cung luc => CHAN
+run "$HOOK" 2 "status: 'Accepted'  # xong" \
+  "{\"tool_input\":{\"file_path\":\"$DRAFT\",\"new_string\":\"status: 'Accepted'  # xong\"}}"
+
+# A2e. chu approved trong comment, khong phai gia tri => CHO QUA
+run "$HOOK" 0 "status: draft # cho nguoi dung approved" \
+  "{\"tool_input\":{\"file_path\":\"$DRAFT\",\"new_string\":\"status: draft # cho nguoi dung approved\"}}"
+
+# MultiEdit chi doi gia tri => CHAN
+run "$HOOK" 2 "MultiEdit chi doi gia tri draft->accepted" \
+  "{\"tool_input\":{\"file_path\":\"$DRAFT\",\"edits\":[{\"old_string\":\"draft\",\"new_string\":\"accepted\"}]}}"
+
 echo "== protect-approved-bash.sh =="
 
 # 10. sed doi status => CHAN
@@ -136,6 +166,14 @@ run "$HOOK_BASH" 2 "Bash: echo 'status: approved' >> file" \
 # 12. lenh binh thuong => CHO QUA
 run "$HOOK_BASH" 0 "Bash: lenh git status binh thuong" \
   '{"tool_name":"Bash","tool_input":{"command":"git status --short"}}'
+
+# R2. sed doi gia tri, lenh KHONG chua chu "status" => CHAN
+run "$HOOK_BASH" 2 "Bash: sed doi gia tri, khong co chu status" \
+  "{\"tool_input\":{\"command\":\"sed -i '' s/draft/approved/ docs/intent.md\"}}"
+
+# Lenh chi DOC co chu approved => CHO QUA
+run "$HOOK_BASH" 0 "Bash: grep approved (chi doc)" \
+  '{"tool_input":{"command":"grep -rn approved docs/"}}'
 
 # Bash: chan ca accepted
 run "$HOOK_BASH" 2 "Bash: sed doi ADR sang accepted" \
@@ -151,11 +189,12 @@ run "$HOOK_BASH" 2 "Bash: sed doi ADR sang accepted" \
 known_gap "$HOOK_BASH" 0 "known_gap_bash_obfuscation" \
   "{\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"s=appro; echo \\\"status: \${s}ved\\\" >> $DRAFT\"}}"
 
-echo "== nhanh suy bien: fail closed =="
+echo "== nhanh suy bien: PATH toi gian, thieu python3, TMPDIR hong, JSON hong =="
 
-# Thu muc PATH toi gian, co python3 nhung KHONG co jq.
+# PATH toi gian: chi co sh + python3. Hook khong con dung jq, grep, tr hay
+# file tam nua (review vong 2, finding A1) nen phai chay duoc o day.
 NOJQ="$TMP/bin-nojq"; mkdir -p "$NOJQ"
-for b in bash cat head tail python3; do
+for b in sh python3; do
   src=$(command -v "$b") && [ -x "$src" ] && ln -sf "$src" "$NOJQ/$b"
 done
 
@@ -171,24 +210,36 @@ run_env() {
   fi
 }
 
-run_env "$NOJQ" "$HOOK" 2 "Khong co jq: Edit dat status approved van bi chan" \
+run_env "$NOJQ" "$HOOK" 2 "PATH toi gian (chi sh+python3): van chan" \
   "{\"tool_input\":{\"file_path\":\"$DRAFT\",\"new_string\":\"status: approved\"}}"
-run_env "$NOJQ" "$HOOK" 0 "Khong co jq: Edit binh thuong van cho qua" \
+run_env "$NOJQ" "$HOOK" 0 "PATH toi gian: Edit binh thuong van cho qua" \
   "{\"tool_input\":{\"file_path\":\"$DRAFT\",\"new_string\":\"# chi sua tieu de\"}}"
-run_env "$NOJQ" "$HOOK_BASH" 2 "Khong co jq: Bash sed doi approved van bi chan" \
+run_env "$NOJQ" "$HOOK_BASH" 2 "PATH toi gian: Bash sed van bi chan" \
   "{\"tool_input\":{\"command\":\"sed -i '' 's/draft/approved/' $DRAFT; echo status\"}}"
 
 # 17-18. Khong co ca jq lan python3 -> FAIL CLOSED (exit 2), khong duoc cho qua.
 EMPTY="$TMP/bin-empty"; mkdir -p "$EMPTY"
-for b in bash cat head tail; do
+for b in sh; do
   src=$(command -v "$b") && [ -x "$src" ] && ln -sf "$src" "$EMPTY/$b"
 done
-run_env "$EMPTY" "$HOOK" 2 "Khong co jq lan python3: fail closed" \
+run_env "$EMPTY" "$HOOK" 2 "Thieu python3: fail closed (exit 2, khong phai 127)" \
   "{\"tool_input\":{\"file_path\":\"$DRAFT\",\"new_string\":\"# vo hai\"}}"
-run_env "$EMPTY" "$HOOK_BASH" 2 "Khong co jq lan python3 (bash hook): fail closed" \
+run_env "$EMPTY" "$HOOK_BASH" 2 "Thieu python3 (bash hook): fail closed" \
   '{"tool_input":{"command":"ls"}}'
 
-# 19-20. JSON hong -> FAIL CLOSED.
+# TMPDIR khong ghi duoc -> hook van phai chan dung (ban bash cu fail open o day).
+TMPRO="$TMP/tmp-readonly"; mkdir -p "$TMPRO"; chmod 500 "$TMPRO"
+printf '%s' "{\"tool_input\":{\"file_path\":\"$DRAFT\",\"new_string\":\"status: approved\"}}" \
+  | TMPDIR="$TMPRO" "$HOOK" >/dev/null 2>&1
+got=$?
+if [ "$got" -eq 2 ]; then
+  printf '  ok   %-58s (exit %s)\n' "TMPDIR khong ghi duoc: van chan" "$got"; pass=$((pass+1))
+else
+  printf '  FAIL %-58s (exit %s, mong doi 2)\n' "TMPDIR khong ghi duoc: van chan" "$got"; fail=$((fail+1))
+fi
+chmod 700 "$TMPRO"
+
+# JSON hong -> FAIL CLOSED.
 run "$HOOK" 2 "JSON hong: fail closed" 'khong-phai-json'
 run "$HOOK_BASH" 2 "JSON hong (bash hook): fail closed" 'khong-phai-json'
 

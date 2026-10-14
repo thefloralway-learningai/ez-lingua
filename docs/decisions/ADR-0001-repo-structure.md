@@ -94,6 +94,24 @@ Mỗi mục có hai lối ra. **Chưa chọn cái nào — agent không tự s�
 
 Lưu ý khi chọn (a): §C16–§C21 chỉ là số gợi ý, đánh lại cho liền mạch khi ghi thật.
 
+## Mô hình mối đe dọa
+Viết ra vì hai vòng review đầu cứ xoay quanh hook mà không hội tụ: thiếu mô hình này
+thì mọi lỗ hổng đều trông như blocking, và cuộc tranh luận không có điểm dừng.
+
+| | |
+|---|---|
+| **Hook chống cái gì** | **Nhầm lẫn.** Agent vô tình đổi `status`, hoặc đi tắt vì thấy tiện. Hook làm việc đó thành lỗi rõ ràng thay vì âm thầm trôi qua |
+| **Hook KHÔNG chống cái gì** | **Agent cố ý.** Mọi cơ chế khớp chuỗi đều né được: ghép chuỗi, base64, viết script rồi chạy. Đừng dựng thêm lớp vá cho tình huống này — vá không hết |
+| **Cổng duyệt thật** | **Merge PR vào `master`, do người làm.** Đó là chỗ duy nhất một thay đổi thực sự được chấp nhận. Hook chỉ là biển báo đặt sớm hơn trên đường |
+| **Rủi ro còn lại — chấp nhận ở Stage 0–1** | Agent dùng **chung git credentials** với người dùng, nên về nguyên tắc có thể vượt hook qua Bash và push thẳng. Chấp nhận vì ở Stage 0–1 chưa có code, thiệt hại tối đa là vài file tài liệu — khôi phục được từ git |
+| **Biện pháp dự kiến** | Khi bắt đầu **stage Dev**: chạy agent trong container **không có push token**. Lúc đó ranh giới tin cậy nằm ở credentials, đúng chỗ của nó, chứ không nằm ở hook |
+
+**Hệ quả cho việc xếp mức độ:** finding dạng **"vượt được hook"** xếp **major**, không
+phải blocking — vì hook vốn không nhận nhiệm vụ chống kẻ cố ý. Finding dạng **"hook
+không chạy đúng trong điều kiện bình thường"** (fail open, bắt nhầm việc vô hại) vẫn là
+blocking, vì đó là hỏng đúng việc nó nhận làm. Ghi trùng vào
+`.agents/skills/qa-review/SKILL.md`.
+
 ## Cổng duyệt thật — quyết định cần người
 Hook chặn được *tai nạn* và *đường tắt tiện tay*, không chặn được ý định. Những việc
 dưới đây **chỉ người dùng làm**, không agent nào được thay:

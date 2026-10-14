@@ -1,90 +1,19 @@
-#!/usr/bin/env bash
-# Bảo vệ cổng duyệt: chỉ NGƯỜI DÙNG được đưa một tài liệu sang TRẠNG THÁI KẾT THÚC.
+#!/bin/sh
+# Wrapper tối giản: gọi protect_approved.py.
 #
-# Hai bộ từ vựng, cùng một ý nghĩa "đã chốt, agent không sửa nữa":
-#   - artifact (intent, requirements, design, tasks): draft → approved
-#   - ADR:                        proposed → accepted (hoặc superseded)
-# Hook chặn agent chuyển sang BẤT KỲ trạng thái kết thúc nào trong số đó.
+# Vì sao cần wrapper thay vì để thẳng shebang python3 trong file này:
+# Claude Code chỉ coi **exit 2** là chặn. Nếu máy không có python3, shebang
+# thất bại và hook thoát 127 — tức KHÔNG chặn, đúng lúc nó phải chặn nhất.
+# Wrapper này kiểm python3 trước và tự trả 2 nếu thiếu.
 #
-# Chặn (exit 2) khi:
-#   1. File đang sửa đã ở trạng thái kết thúc — không cho sửa tiếp.
-#   2. Nội dung SẮP GHI đưa status về một trạng thái kết thúc mà file hiện tại chưa ở
-#      đó — tức agent đang tự duyệt sản phẩm của chính nó.
-#   3. Hook không tự chạy được (thiếu jq lẫn python3, JSON hỏng) — FAIL CLOSED.
-#      Một cổng duyệt mà hỏng thì cho qua là cổng vô dụng.
-#
-# Đọc nội dung sắp ghi từ tool_input: Write → .content, Edit → .new_string,
-# MultiEdit → .edits[].new_string.
-#
-# Đây là lớp BEST-EFFORT, không phải ranh giới bảo mật. Xem ADR-0001 §C14.
-
-set -u
-
-block() { printf 'BLOCKED: %b\n' "$1" >&2; exit 2; }
-
-input=$(cat)
-
-if command -v jq >/dev/null 2>&1; then
-  payload=$(printf '%s' "$input" | jq -r '
-      ( .tool_input.file_path // "" ),
-      ( [ .tool_input.content // empty,
-          .tool_input.new_string // empty,
-          ( .tool_input.edits // [] | .[]? | .new_string // empty )
-        ] | join("\n") )
-    ') || block "hook không phân tích được tool_input: jq trả lỗi (JSON hỏng hoặc jq hỏng).\nHook fail closed — không thể xác minh thao tác này có tự duyệt hay không.\nHãy DỪNG và báo người dùng."
-elif command -v python3 >/dev/null 2>&1; then
-  payload=$(printf '%s' "$input" | python3 -I -c '
-import sys, json
-d = json.load(sys.stdin).get("tool_input", {}) or {}
-parts = [d.get("content") or "", d.get("new_string") or ""]
-for e in (d.get("edits") or []):
-    if isinstance(e, dict):
-        parts.append(e.get("new_string") or "")
-print(d.get("file_path") or "")
-print("\n".join(parts))
-') || block "hook không phân tích được tool_input: python3 trả lỗi (JSON hỏng hoặc python3 hỏng).\nHook fail closed — không thể xác minh thao tác này có tự duyệt hay không.\nHãy DỪNG và báo người dùng."
-else
-  block "môi trường thiếu cả jq lẫn python3 nên hook không đọc được tool_input.\nHook fail closed — cổng duyệt không hoạt động được.\nHãy DỪNG và báo người dùng (cần cài jq hoặc python3)."
+# Không dùng here-string hay file tạm (review vòng 2, finding A1).
+# Dùng parameter expansion thay `dirname` để wrapper chỉ cần sh + python3.
+dir=${0%/*}
+[ "$dir" = "$0" ] && dir=.
+if command -v python3 >/dev/null 2>&1; then
+  exec python3 "$dir/protect_approved.py"
 fi
-
-file=$(printf '%s' "$payload" | head -n 1)
-new_content=$(printf '%s' "$payload" | tail -n +2)
-
-# Trạng thái kết thúc. `superseded` cũng tính: nói một ADR đã bị thay thế là một
-# phán quyết về lịch sử quyết định, không phải việc agent tự kết luận.
-FINAL_STATES="approved accepted superseded"
-
-# Tìm dòng `status: <trạng thái kết thúc>` mà không cần grep (dùng pattern match của
-# bash), để hook không chết khi PATH tối giản.
-approves() {
-  local line value st
-  while IFS= read -r line; do
-    line="${line#"${line%%[![:space:]]*}"}"   # bỏ khoảng trắng đầu
-    line="${line%"${line##*[![:space:]]}"}"   # bỏ khoảng trắng cuối
-    case "$line" in
-      status:*) ;;
-      *) continue ;;
-    esac
-    value="${line#status:}"
-    value="${value#"${value%%[![:space:]]*}"}"
-    value="${value%"${value##*[![:space:]]}"}"
-    for st in $FINAL_STATES; do
-      [ "$value" = "$st" ] && return 0
-    done
-  done <<< "$1"
-  return 1
-}
-
-# 1. File hiện tại đã approved → khóa.
-if [ -n "$file" ] && [ -f "$file" ]; then
-  if approves "$(cat "$file")"; then
-    block "$file đã ở trạng thái kết thúc. Muốn sửa, người dùng phải đổi status về draft/proposed."
-  fi
-fi
-
-# 2. Nội dung sắp ghi đưa status lên approved → agent đang tự duyệt.
-if approves "$new_content"; then
-  block "Chỉ người dùng được đổi status sang approved. Hãy dừng và báo người dùng."
-fi
-
-exit 0
+echo "BLOCKED: môi trường không có python3 nên hook không chạy được." >&2
+echo "Không kiểm được thao tác Edit/Write này có tự duyệt hay không — fail closed." >&2
+echo "Hãy DỪNG và báo người dùng (cần cài python3)." >&2
+exit 2

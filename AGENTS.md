@@ -77,8 +77,10 @@ ngữ cảnh người dùng nhập không lộ ra ngoài.
 - **Không bao giờ tự đổi `status` sang `approved`.** Chỉ người dùng làm. Hai hook chặn:
   `protect-approved.sh` (Edit/Write/MultiEdit — soi cả nội dung sắp ghi) và
   `protect-approved-bash.sh` (lệnh shell). Cả hai **fail closed**. Chúng là lớp
-  best-effort, **không phải ranh giới bảo mật** — đường vòng vẫn còn; cổng duyệt thật
-  là con người. Test: `tests/hooks/test_protect_approved.sh`. → ADR-0001 §C9, §C14
+  guardrail **chống nhầm lẫn**, không chống agent cố ý: cổng duyệt thật là **merge PR
+  vào `master` do người làm**. Vì vậy finding "vượt được hook" xếp major, không blocking.
+  Test: `tests/hooks/test_protect_approved.sh`.
+  → ADR-0001 §C9, §C14, § "Mô hình mối đe dọa"
 - **Model nào viết thì model kia review.** Agent không tự review sản phẩm của chính nó.
   → ADR-0001 §P
 - Mỗi quyết định kiến trúc hoặc quy trình ghi thành ADR trong `docs/decisions/`

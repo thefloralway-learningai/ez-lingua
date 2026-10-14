@@ -74,6 +74,19 @@ Reviewer khác nhau dùng thang khác nhau: Codex trả `P0`–`P3` hoặc
 Giữ nhãn gốc trong ngoặc để truy ngược: `blocking (codex: high)`. Nhờ vậy sau này kiểm
 lại được quy đổi có quá nặng tay hay quá nhẹ tay không.
 
+### Ngoại lệ: finding về hook bảo vệ status
+Hook `protect-approved*` là **guardrail chống nhầm lẫn**, không chống agent cố ý; cổng
+duyệt thật là merge PR vào `master` do người làm (ADR-0001 § "Mô hình mối đe dọa").
+Nên hạ một bậc:
+
+| Loại finding | Mức |
+|---|---|
+| "Có cách vượt được hook" (ghép chuỗi, mã hóa, viết script rồi chạy…) | **major**, kể cả khi reviewer gắn `high`/`P1` |
+| "Hook fail open / không chạy đúng trong điều kiện bình thường" | **blocking** — hỏng đúng việc nó nhận làm |
+| "Hook chặn nhầm thao tác vô hại" | **blocking** — gate hay báo động giả thì người ta sẽ tắt nó |
+
+Không áp ngoại lệ này cho gate khác trừ khi gate đó cũng có mô hình mối đe dọa viết ra.
+
 ## Ngưỡng dừng
 Mặc định: **0 blocking, ≤2 major, tối đa 3 vòng**. Với `requirements.md` thêm gate
 cứng: đặt được tên test cụ thể cho **100% AC**. Đây là giá trị ban đầu — xem
