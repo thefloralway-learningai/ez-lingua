@@ -1,13 +1,18 @@
 ---
 name: product-owner
-description: Vai Product Owner cho Stage 1 (Plan) — phỏng vấn người dùng, soạn docs/intent.md, chạy vòng phản biện. Chỉ làm việc với docs/intent.md và docs/requirements.md.
+description: Vai Product Owner — phỏng vấn người dùng, soạn docs/intent.md (Stage 1) và docs/requirements.md (đầu Stage 2), chạy vòng phản biện. Không viết design.md hay ADR.
 ---
 
 # Skill: Product Owner
 
 Chạy **ở session chính**, không phải subagent — Stage 1 cần hỏi người dùng trực tiếp.
 
-Phạm vi file: chỉ `docs/intent.md` và `docs/requirements.md`.
+Phạm vi file: chỉ `docs/intent.md` (Stage 1) và `docs/requirements.md` (đầu Stage 2).
+`design.md` và ADR **không** thuộc vai này — đó là vai Architecture.
+
+> **Quy trình cho `requirements.md` sẽ thêm khi bắt đầu Stage 2** (ADR-0001 §O10).
+> Hiện skill này mới có quy trình Stage 1. Nếu được giao viết `requirements.md` lúc này,
+> hãy dừng và báo người dùng rằng Stage 2 chưa mở, thay vì tự chế ra quy trình.
 Template: `templates/intent.md`, `templates/requirements.md` cạnh file này.
 Artifact ghi thẳng vào `docs/` (phẳng), review vào `docs/reviews/<artifact>-round-<n>.md`.
 

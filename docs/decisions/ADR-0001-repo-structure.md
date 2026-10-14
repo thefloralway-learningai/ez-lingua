@@ -23,7 +23,7 @@ rỗng mà Stage 1 không dùng tới, và khóa sớm những lựa chọn chư
 
 → Chọn **phương án 2**, tái sử dụng tài sản của starter.
 
-## Quyết định — cấu trúc (§C1–§C13)
+## Quyết định — cấu trúc (§C1–§C14)
 
 | § | Quyết định | Lý do |
 |---|---|---|
@@ -42,6 +42,8 @@ rỗng mà Stage 1 không dùng tới, và khóa sớm những lựa chọn chư
 | C12 | **Vai Dev chạy trên Claude Code ở giai đoạn đầu**; Codex review code. Xem xét lại khi `harness/gates/` + CI đã chạy | Không phải vì Claude viết code tốt hơn — chưa đo. Lý do là hook, permission và subagent hiện chỉ có trong `.claude/`, nên chỉ ở đó mới ràng buộc được bằng máy quy tắc "test khóa trước khi viết code". Khi gate nằm ở `harness/` + CI thì ràng buộc không còn phụ thuộc công cụ, lúc đó chọn lại bằng dữ liệu |
 | C13 | **Quy tắc truy vết**: mọi quyết định hoặc luật trong `AGENTS.md` phải trỏ tới nguồn (ADR hoặc file review). Mục chưa có nguồn mang dấu ⚠ và không được coi là đã chốt | Ở Stage 0 đã xảy ra một lần agent nâng một dòng liệt kê ngắn của người dùng thành dòng quyết định trong AGENTS.md, không hỏi lại và không ghi nguồn (xem `docs/learning-log.md`). Có nguồn thì đọc được ai quyết, lúc nào, vì sao — và phân biệt được "đã chốt" với "agent tự đề xuất" |
 
+| C14 | **Hook chỉ là lớp best-effort, không phải ranh giới bảo mật.** `protect-approved.sh` đọc cả nội dung sắp ghi trong `tool_input` (Write `.content`, Edit `.new_string`, MultiEdit `.edits[].new_string`) và chặn mọi thao tác của agent đưa status về một **trạng thái kết thúc** — `approved` (artifact), `accepted`/`superseded` (ADR); `protect-approved-bash.sh` chặn best-effort lệnh shell chứa "status" cùng một trạng thái kết thúc. Cả hai **fail closed**. Cổng duyệt thật: xem mục "Cổng duyệt thật — quyết định cần người" | Codex adversarial review (`repo-structure-round-1.md` #1) chứng minh hook cũ chỉ đọc nội dung *hiện tại* của file, nên một Edit `draft` → `approved` vẫn lọt — agent tự duyệt được sản phẩm của chính nó rồi khóa file lại. Vá xong thì đường vòng vẫn còn (ghép chuỗi, base64, viết script rồi chạy), nên không được coi hook là ranh giới tin cậy: nó chỉ biến việc lách luật thành hành vi phải cố ý |
+
 ## Quyết định — quy trình (§P) — người dùng chốt 2026-10-14
 Các điểm README nói nước đôi, nay đã chốt và đưa vào bảng 6 stage trong `AGENTS.md`:
 
@@ -54,7 +56,7 @@ Các điểm README nói nước đôi, nay đã chốt và đưa vào bảng 6 
 | Deploy | vai DevOps |
 | Maintain | vai Dev; metric vượt ngưỡng → mở `intent.md` mới |
 
-## Quyết định — xử lý 9 vấn đề còn mở (§O1–§O9) — người dùng chốt 2026-10-14
+## Quyết định — xử lý vấn đề còn mở (§O1–§O11) — người dùng chốt 2026-10-14
 
 | § | Vấn đề | Quyết định | Lý do |
 |---|---|---|---|
@@ -67,6 +69,8 @@ Các điểm README nói nước đôi, nay đã chốt và đưa vào bảng 6 
 | O7 | Tên file review theo stage hay theo artifact? | Theo artifact: `docs/reviews/<artifact>-round-<n>.md`, `<artifact>` ∈ `repo-structure`, `intent`, `requirements`, `design`, `tasks` | Một stage sinh nhiều artifact (Design sinh cả requirements lẫn design), tên theo stage sẽ đụng nhau |
 | O8 | Ngưỡng dừng vòng review cho các stage sau | Mặc định 0 blocking, ≤2 major, tối đa 3 vòng. Gate riêng: `requirements` = QA đặt được tên test cho 100% AC; `design` = mọi AC có tầng test + mọi lựa chọn stack có ADR; `dev` = test/lint/SAST pass. Ghi rõ **"giá trị ban đầu, chỉnh theo learning-log"** | Cần một con số để bắt đầu đo, nhưng chưa có dữ liệu để biết nó đúng. Đánh dấu là tạm thời để sau này chỉnh mà không phải tranh luận lại |
 | O9 | `reference/asdlc-starter/` có commit không? | Không commit, thêm `reference/` vào `.gitignore`, **xóa sau khi ADR-0001 được accept** | Chỉ là giàn giáo: đã rút xong template và hook. Giữ lại sẽ có người sửa nhầm bản copy |
+| O10 | `requirements.md` có hai chủ: bảng 6 stage giao vai Architecture, skill PO lại ghi trong phạm vi của mình — mà quy trình trong skill chỉ tạo `intent.md` (review vòng 1 #3) | `requirements.md` thuộc **vai Product Owner**, tạo ở **đầu Stage 2**. `design.md` + ADR thuộc **vai Architecture**. Quy trình requirements trong skill `product-owner` sẽ thêm khi bắt đầu Stage 2 | Biến `intent.md` thành US/AC là việc sản phẩm — ai viết intent thì hiểu rõ nhất ý định đằng sau. Kiến trúc đọc requirements như đầu vào, không tự đặt ra yêu cầu cho mình rồi tự thỏa mãn |
+| O11 | Mỗi reviewer dùng thang mức độ riêng (Codex trả `P0`–`P3`, `high`/`medium`/`low`), không gộp lại được để tính ngưỡng dừng | Bảng quy đổi trong AGENTS.md: `critical`/`high`/`P0`/`P1` → blocking; `medium`/`P2` → major; `low`/`P3` → minor. Giữ nhãn gốc trong ngoặc. **Giá trị ban đầu, chỉnh theo learning-log** | Ngưỡng dừng ("0 blocking, ≤2 major") chỉ có nghĩa khi mọi reviewer nói cùng một thang. Giữ nhãn gốc để sau này kiểm lại xem quy đổi có quá nặng tay hay không |
 
 ## Mục chưa có nguồn — rà soát AGENTS.md ngày 2026-10-14
 Theo §C13, các mục dưới đây đang nằm trong `AGENTS.md` nhưng **chưa có ADR hay file
@@ -85,6 +89,21 @@ chốt**. Cần xử lý từng mục: hoặc người dùng chốt rồi ghi v�
 
 Việc **hoãn** các hạng mục ở U7 thì đã có nguồn (§C8); chỉ *điều kiện cụ thể* là chưa.
 
+## Cổng duyệt thật — quyết định cần người
+Hook chặn được *tai nạn* và *đường tắt tiện tay*, không chặn được ý định. Những việc
+dưới đây **chỉ người dùng làm**, không agent nào được thay:
+
+| Việc | Vì sao máy không thay được |
+|---|---|
+| Đổi `status: draft` → `approved` (hoặc `accepted`) ở bất kỳ artifact nào | Là hành vi *chịu trách nhiệm*, không phải hành vi *kiểm tra*. Không có cách nào để agent chứng minh với chính nó rằng tài liệu đã đủ tốt |
+| Chấp nhận một ADR | Như trên; ADR là nơi ghi "ai đã quyết" |
+| Chốt phạm vi MVP, cắt tính năng | Đánh đổi sản phẩm, không có đáp án đúng để agent tìm ra |
+| Bỏ qua một gate đang fail | Nếu agent tự bỏ qua được thì gate không còn là gate |
+
+Hệ quả thực tế: mọi quy trình trong repo này kết thúc ở **"dừng lại và báo người dùng"**,
+không phải ở "tự duyệt rồi đi tiếp". Nếu một ngày nào đó cần agent tự duyệt một loại
+artifact nào đó, phải ghi ADR riêng cho việc đó, nêu rõ chấp nhận rủi ro gì.
+
 ## Hệ quả
 - Repo nhỏ, mỗi file đang có người dùng. Đổi lại, mỗi lần sang stage mới phải quay lại
   mục "Sẽ thêm khi cần" và ghi thêm ADR.
@@ -94,6 +113,10 @@ Việc **hoãn** các hạng mục ở U7 thì đã có nguồn (§C8); chỉ *�
 - Các ngưỡng gate ở trên chưa có dữ liệu thực tế chống lưng; vòng chạy thật đầu tiên có
   thể cho thấy chúng quá chặt hoặc quá lỏng — lúc đó sửa ADR này, đừng lặng lẽ bỏ qua gate.
 - Xóa `reference/` sau khi accept là **một chiều**: phải chắc đã rút hết thứ cần dùng.
+- Hook (§C14) có test tự động: `tests/hooks/test_protect_approved.sh`, 20 case gồm cả
+  nhánh suy biến (thiếu `jq`, thiếu cả `jq` lẫn `python3`, JSON hỏng → đều fail closed).
+  Một case **cố tình khẳng định một lỗ vẫn còn**: lệnh Bash ghép chuỗi `s=appro; ...${s}ved`
+  vẫn lọt. Giữ case đó để không ai nhầm hook là ranh giới kín.
 - Quy tắc truy vết (§C13) hiện chỉ là **luật mềm**: không có gì chặn một agent ghi thêm
   dòng không nguồn vào AGENTS.md. Thành ràng buộc cứng khi `harness/gates/` có script
   kiểm mọi dòng quyết định đều trỏ tới một ADR tồn tại.
