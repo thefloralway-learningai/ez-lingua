@@ -78,7 +78,7 @@ dung bảng (ADR-0001 § "Mục chưa có nguồn" U2).
   guardrail **chống nhầm lẫn** trên đường Edit/Write/MultiEdit, không chống agent cố ý.
   Ghi qua Bash **không bị chặn trong session** — do `harness/gates/check_status.py` bắt
   trước khi mở PR. (Hook Bash đã xóa: nó chặn nhầm lệnh vô hại.)
-  Cổng duyệt thật là **merge PR vào `master` do người làm**.
+  Cổng duyệt thật là **merge PR vào nhánh gốc (`main`) do người làm**.
   Test: `tests/hooks/test_protect_approved.sh`.
   → ADR-0001 §C9, §C14, § "Mô hình mối đe dọa"
 - **Model nào viết thì model kia review.** Agent không tự review sản phẩm của chính nó.
@@ -91,7 +91,7 @@ dung bảng (ADR-0001 § "Mục chưa có nguồn" U2).
 - Không bịa thông tin người dùng chưa nói. Thiếu → ghi vào "Câu hỏi mở".
   → ADR-0001 §C20
 - **Chạy `python3 harness/gates/check_status.py` trước khi mở PR.** Gate báo FAIL nếu
-  nhánh sửa file đã duyệt trên `master`. → ADR-0001 § "Mô hình mối đe dọa"
+  nhánh sửa file đã duyệt trên nhánh gốc. → ADR-0001 § "Mô hình mối đe dọa"
 - **Bên sửa không được kết luận gate đạt.** Sửa xong thì ghi "đã xử lý n/n" và
   "Gate: chờ round <n+1>" — **vòng review kế tiếp** mới quyết định gate có đạt hay
   không. Lý do: bên vừa sửa là bên ít có khả năng thấy chỗ mình sửa hụt nhất.
@@ -140,7 +140,8 @@ Quy đổi mức độ: xem `.agents/skills/qa-review/SKILL.md`. Đó là **ngu�
 - `harness/lib/frontmatter.py` — parser `status` dùng chung cho hook và gate. **Một bản
   duy nhất**: đừng viết lại logic đọc frontmatter ở nơi khác.
 - `harness/gates/` — gate chạy ngoài session, trả exit code.
-  `check_status.py`: nhánh có sửa file đã duyệt trên `master` không.
+  `check_status.py`: nhánh có sửa file đã duyệt trên nhánh gốc không (tự dò
+  `origin/HEAD` → `main` → `master`).
 - `tests/` — `hooks/` và `gates/`. Sửa hook hay gate thì chạy lại test tương ứng
   trước khi commit.
 

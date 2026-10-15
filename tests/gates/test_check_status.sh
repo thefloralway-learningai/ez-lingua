@@ -10,16 +10,16 @@ trap 'rm -rf "$TMP"' EXIT
 
 pass=0; fail=0; known_gap=0
 
-# Dựng repo: master có sẵn file, rồi sang nhánh work.
+# Dựng repo: nhánh gốc 'main' có sẵn file, rồi sang nhánh work.
 new_repo() {
   local d="$TMP/$1"; mkdir -p "$d"; cd "$d" || exit 1
-  git init -q -b master .
+  git init -q -b main .
   git config user.email t@t; git config user.name t
 }
 
 check() {
   local want="$1" name="$2" got
-  python3 "$GATE" --base master --repo "$PWD" >/dev/null 2>&1
+  python3 "$GATE" --repo "$PWD" >/dev/null 2>&1
   got=$?
   if [ "$got" -eq "$want" ]; then
     printf '  ok   %-56s (exit %s)\n' "$name" "$got"; pass=$((pass+1))
@@ -30,14 +30,14 @@ check() {
 
 echo "== check_status.py =="
 
-# 1. Sua file da approved tren master => FAIL
+# 1. Sua file da approved tren nhanh goc => FAIL
 new_repo r1
 printf -- '---\nstatus: approved\n---\n# da duyet\n' > intent.md
 git add -A && git commit -qm base
 git checkout -qb work
 printf -- '---\nstatus: approved\n---\n# da duyet, bi sua trom\n' > intent.md
 git commit -qam edit
-check 1 "Sua file da approved tren master"
+check 1 "Sua file da approved tren nhanh goc"
 
 # 2. Sua file draft => OK
 new_repo r2
@@ -48,7 +48,7 @@ printf -- '---\nstatus: draft\n---\n# nhap, sua tiep\n' > intent.md
 git commit -qam edit
 check 0 "Sua file draft"
 
-# 3. Them file moi (chua co tren master) => OK
+# 3. Them file moi (chua co tren nhanh goc) => OK
 new_repo r3
 printf -- '---\nstatus: draft\n---\n# a\n' > a.md
 git add -A && git commit -qm base
@@ -124,6 +124,33 @@ else
   printf '  FAIL %-56s (exit %s, mong doi 1)\n' "Base khong ton tai: bao loi" "$got"; fail=$((fail+1))
 fi
 
+# 11b. Tu do nhanh goc: repo dung 'main', khong truyen --base => van chay dung
+new_repo r11b
+printf -- '---\nstatus: approved\n---\n# x\n' > intent.md
+git add -A && git commit -qm base
+git checkout -qb work
+printf -- '---\nstatus: approved\n---\n# x sua\n' > intent.md
+git commit -qam edit
+check 1 "Tu do nhanh goc 'main' khi khong truyen --base"
+
+# 11c. --base tuong minh van uu tien hon tu do
+new_repo r11c
+printf -- '---\nstatus: approved\n---\n# x\n' > intent.md
+git add -A && git commit -qm base
+git checkout -qb other
+printf -- '---\nstatus: draft\n---\n# y\n' > other.md
+git add -A && git commit -qm other
+git checkout -qb work
+printf -- '---\nstatus: draft\n---\n# y sua\n' > other.md
+git commit -qam edit
+python3 "$GATE" --base other --repo "$PWD" >/dev/null 2>&1
+got=$?
+if [ "$got" -eq 0 ]; then
+  printf '  ok   %-56s (exit %s)\n' "--base tuong minh duoc uu tien" "$got"; pass=$((pass+1))
+else
+  printf '  FAIL %-56s (exit %s, mong doi 0)\n' "--base tuong minh duoc uu tien" "$got"; fail=$((fail+1))
+fi
+
 # 12. git mv file da approved => FAIL (rename = D + A, bat o nhanh D)
 new_repo r12
 printf -- '---\nstatus: approved\n---\n# x\n' > intent.md
@@ -181,7 +208,7 @@ git add -A && git commit -qm base
 git checkout -qb work
 printf -- '---\nstatus: draft\n---\n# x\n' > intent.md
 git commit -qam "nguoi dung mo lai de sua"
-python3 "$GATE" --base master --repo "$PWD" >/dev/null 2>&1
+python3 "$GATE" --repo "$PWD" >/dev/null 2>&1
 got=$?
 if [ "$got" -eq 1 ]; then
   printf '  GAP  %-56s (exit %s, lỗ hổng đã biết)\n' "known_gap_human_reopen_flagged" "$got"

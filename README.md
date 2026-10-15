@@ -1,4 +1,4 @@
-# learning-lingua
+# ez-lingua
 
 ## Mô tả
 Repo dựng thử để học AI-native SDLC: multi-agent, subagent, skill, hook trong quá trình

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Gate: nhánh này có sửa file nào đã được duyệt trên master không?
+"""Gate: nhánh này có sửa file nào đã được duyệt trên nhánh gốc không?
 
 Gate THICK đầu tiên của repo. Hook trong `.claude/hooks/` chỉ canh đường
 Edit/Write/MultiEdit **bên trong một session**; ghi qua Bash nằm ngoài phạm vi nó
@@ -8,7 +8,10 @@ Edit/Write/MultiEdit **bên trong một session**; ghi qua Bash nằm ngoài ph�
 **ngoài session**, trên git, nên không quan tâm thay đổi đến từ công cụ nào.
 
 Cách chạy:
-    python3 harness/gates/check_status.py [--base master] [--repo .]
+    python3 harness/gates/check_status.py [--base <nhánh>] [--repo .]
+
+Không truyền --base thì tự dò: origin/HEAD → main → master. Hard-code `master`
+đã hỏng một lần khi repo đổi tên nhánh gốc sang `main`.
 
 Exit 0 = không file đã duyệt nào bị sửa. Exit 1 = có, in tên file.
 
@@ -35,11 +38,30 @@ def run(args, repo):
                           stderr=subprocess.PIPE, text=True)
 
 
+def default_base(repo):
+    """Dò nhánh gốc: origin/HEAD → main → master. None nếu không có cái nào."""
+    head = run(["git", "symbolic-ref", "--quiet", "--short", "refs/remotes/origin/HEAD"], repo)
+    if head.returncode == 0 and head.stdout.strip():
+        return head.stdout.strip()
+    for name in ("main", "master"):
+        if run(["git", "rev-parse", "--verify", "--quiet", name], repo).returncode == 0:
+            return name
+    return None
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--base", default="master", help="nhánh gốc (mặc định: master)")
+    ap.add_argument("--base", default=None,
+                    help="nhánh gốc (mặc định: tự dò origin/HEAD → main → master)")
     ap.add_argument("--repo", default=".", help="thư mục repo (mặc định: .)")
     a = ap.parse_args()
+
+    if a.base is None:
+        a.base = default_base(a.repo)
+        if a.base is None:
+            sys.stderr.write("LỖI: không dò được nhánh gốc (không có origin/HEAD, main "
+                             "hay master). Truyền --base <nhánh>.\n")
+            return 1
 
     merge_base = run(["git", "merge-base", a.base, "HEAD"], a.repo)
     if merge_base.returncode != 0:

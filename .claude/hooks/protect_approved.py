@@ -11,7 +11,7 @@ cái đó do harness/gates/check_status.py canh (ADR-0001 § "Mô hình mối đ
 quyết định của người ở round 3).
 
 ĐÂY LÀ GUARDRAIL CHỐNG NHẦM LẪN, KHÔNG PHẢI RANH GIỚI BẢO MẬT.
-Cổng duyệt thật là merge PR vào master do người làm.
+Cổng duyệt thật là merge PR vào nhánh gốc do người làm.
 
 Chỉ đọc `status` trong YAML FRONTMATTER (khối giữa hai dòng `---` ở ĐẦU file).
 Nội dung ngoài frontmatter bỏ qua hoàn toàn: một tài liệu nói *về* quy trình duyệt
